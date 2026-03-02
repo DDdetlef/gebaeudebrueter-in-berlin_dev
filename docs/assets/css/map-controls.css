@@ -343,12 +343,13 @@
   --ms-header-bg: #fff;
   --ms-header-shadow: 0 2px 10px rgba(0,0,0,.08);
   --ms-nav-width: min(420px, 66vw);
-  --ms-fab-size: 56px;
+  --ms-fab-size: 48px;
   --ms-fab-bg: var(--ms-accent, #1976d2);
   --ms-fab-color: #fff;
   --ms-fab-shadow: 0 6px 16px rgba(0,0,0,0.22);
-  --ms-fab-left: 16px;
-  --ms-fab-bottom: 88px;
+  --ms-fab-right: 12px;
+  --ms-fab-bottom: 12px;
+  --ms-fab-gap: 10px;
 }
 
 body.ms-mobile-redesign {
@@ -420,7 +421,7 @@ body.ms-mobile-redesign .ms-control {
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s ease;
-  z-index: 10055;
+  z-index: 10040;
 }
 .ms-side-backdrop.is-open {
   opacity: 1;
@@ -439,7 +440,7 @@ body.ms-mobile-redesign .ms-control {
   transform: translateX(-100%);
   visibility: hidden;
   transition: transform .25s ease, visibility .25s ease;
-  z-index: 10060;
+  z-index: 10045;
   display: flex;
   flex-direction: column;
   padding-top: max(8px, env(safe-area-inset-top));
@@ -488,7 +489,7 @@ body.ms-mobile-redesign .ms-control {
 
 .ms-fab-filter {
   position: fixed;
-  left: var(--ms-fab-left);
+  right: var(--ms-fab-right);
   bottom: calc(var(--ms-fab-bottom) + env(safe-area-inset-bottom, 0px));
   width: var(--ms-fab-size);
   height: var(--ms-fab-size);
@@ -500,9 +501,54 @@ body.ms-mobile-redesign .ms-control {
   align-items: center;
   justify-content: center;
   box-shadow: var(--ms-fab-shadow);
-  z-index: 10045;
+  z-index: 10050;
   cursor: pointer;
   touch-action: manipulation;
+}
+.ms-fab-filter svg,
+.ms-fab-locate svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.ms-fab-locate {
+  position: fixed;
+  right: var(--ms-fab-right);
+  bottom: calc(var(--ms-fab-bottom) + env(safe-area-inset-bottom, 0px));
+  width: var(--ms-fab-size);
+  height: var(--ms-fab-size);
+  border-radius: 999px;
+  border: 0;
+  background: var(--ms-fab-bg);
+  color: var(--ms-fab-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--ms-fab-shadow);
+  z-index: 10050;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.ms-fab-stack {
+  position: fixed;
+  right: var(--ms-fab-right);
+  bottom: calc(var(--ms-fab-bottom) + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-fab-gap);
+  z-index: 10050;
+}
+.ms-fab-stack .ms-fab-filter,
+.ms-fab-stack .ms-fab-locate {
+  position: static;
+  right: auto;
+  bottom: auto;
+}
+.ms-fab-stack.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity .16s ease, transform .16s ease;
 }
 .ms-fab-filter:hover { filter: brightness(1.05); }
 .ms-fab-filter:active { transform: translateY(1px) scale(.98); }
@@ -519,6 +565,15 @@ body.ms-mobile-redesign .ms-control {
 }
 .ms-fab-filter.is-active .ms-fab-badge { display: block; }
 
+#ms-bottom-sheet {
+  z-index: 10060 !important;
+}
+#ms-info-modal,
+#ms-submit-modal,
+#ms-placeholder-modal {
+  z-index: 10070 !important;
+}
+
 body.ms-side-open {
   overflow: hidden;
   touch-action: none;
@@ -529,4 +584,13 @@ body.ms-side-open {
     --ms-nav-width: clamp(360px, 36vw, 420px);
   }
   .ms-app-title { font-size: 15px; }
+}
+
+@media (max-width: 767.98px) {
+  .leaflet-control-zoom,
+  .leaflet-control-locate,
+  .leaflet-control a[title*="Standort"],
+  .leaflet-control a[aria-label*="Standort"] {
+    display: none !important;
+  }
 }

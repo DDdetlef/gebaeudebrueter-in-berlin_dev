@@ -18,6 +18,12 @@
         }catch(e){}
         return !!(window.innerWidth && window.innerWidth <= 600);
       }
+      function isMobileFabViewport(){
+        try{
+          if(window.matchMedia){ return window.matchMedia('(max-width: 767.98px)').matches; }
+        }catch(e){}
+        return !!(window.innerWidth && window.innerWidth <= 767);
+      }
       function getControlElement(){
         return document.getElementById('ms-control');
       }
@@ -51,7 +57,7 @@
           var map = mapVarName ? window[mapVarName] : null;
           if(!map){ return setTimeout(tryResolve, 150); }
           // ensure zoom control is visible at the map edge
-          if(map.zoomControl && typeof map.zoomControl.setPosition === 'function'){
+          if(!isMobileFabViewport() && map.zoomControl && typeof map.zoomControl.setPosition === 'function'){
             map.zoomControl.setPosition('bottomright');
           }
           var cluster = null;
@@ -175,6 +181,13 @@
         }catch(e){}
       }
       function addLocateMapControl(){
+        if(isMobileFabViewport()){
+          if(MS.map && MS.locateControl && typeof MS.map.removeControl === 'function'){
+            try{ MS.map.removeControl(MS.locateControl); }catch(e){}
+          }
+          MS.locateControl = null;
+          return;
+        }
         if(!MS.map || MS.locateControl || !L || typeof L.control !== 'function'){ return; }
         var LocateControl = L.Control.extend({
           options: { position: 'bottomright' },
@@ -210,6 +223,28 @@
           if(locateEl && zoomEl && locateEl.parentNode && locateEl.parentNode === zoomEl.parentNode){
             locateEl.parentNode.insertBefore(locateEl, zoomEl);
           }
+        }catch(e){}
+      }
+      function removeNativeMapControlsOnMobile(){
+        if(!MS.map || !isMobileFabViewport()){ return; }
+        try{
+          if(MS.map.zoomControl && typeof MS.map.removeControl === 'function'){
+            MS.map.removeControl(MS.map.zoomControl);
+          }
+        }catch(e){}
+        try{
+          if(MS.locateControl && typeof MS.map.removeControl === 'function'){
+            MS.map.removeControl(MS.locateControl);
+          }
+        }catch(e){}
+        MS.locateControl = null;
+        try{
+          var locateNodes = document.querySelectorAll('.leaflet-control-locate, .leaflet-control a[title*="Standort"], .leaflet-control a[aria-label*="Standort"]');
+          locateNodes.forEach(function(node){
+            var root = node.closest ? node.closest('.leaflet-control') : null;
+            if(root && root.parentNode){ root.parentNode.removeChild(root); }
+            else if(node && node.parentNode){ node.parentNode.removeChild(node); }
+          });
         }catch(e){}
       }
       function autoLocateOnMobile(){
@@ -555,6 +590,10 @@
 
       // Sticky header + side-sheet + FAB enhancements (mobile-first)
       (function initMobileRedesign(){
+        function removeLegacyHeaderIfPresent(){
+          var knownLegacy = document.querySelectorAll('#ms-legacy-header, .ms-legacy-header, #old-header, .old-header');
+          knownLegacy.forEach(function(node){ if(node && node.parentNode){ node.parentNode.removeChild(node); } });
+        }
         function ensureMobileRedesignDom(){
           if(document.getElementById('ms-app-header')){ return; }
           if(!document.body){ return; }
@@ -569,7 +608,7 @@
               '<button id="ms-header-submit" class="ms-icon-btn ms-icon-btn-accent" type="button" aria-label="Fundort melden">＋</button>',
             '</header>',
             '<div id="ms-side-backdrop" class="ms-side-backdrop" hidden></div>',
-            '<aside id="ms-side-sheet" class="ms-side-sheet" aria-hidden="true" aria-label="Navigation" tabindex="-1">',
+            '<aside id="ms-side-sheet" class="ms-side-sheet" aria-hidden="true" aria-modal="true" aria-label="Navigation" tabindex="-1">',
               '<div class="ms-side-head">',
                 '<strong>Menü</strong>',
                 '<button id="ms-side-close" class="ms-icon-btn" type="button" aria-label="Menü schließen">✕</button>',
@@ -583,10 +622,15 @@
                 '<button class="ms-side-item" type="button" data-ms-nav-action="privacy"><span class="ms-side-icon">🔒</span><span>Datenschutz</span></button>',
               '</nav>',
             '</aside>',
-            '<button id="fab-filter" class="ms-fab-filter" type="button" aria-label="Filter öffnen">',
-              '<span aria-hidden="true">⚲</span>',
-              '<span class="ms-fab-badge" aria-hidden="true"></span>',
-            '</button>',
+            '<div id="ms-fab-stack" class="ms-fab-stack" aria-hidden="false">',
+              '<button id="fab-filter" class="ms-fab-filter" type="button" aria-label="Filter öffnen">',
+                '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg>',
+                '<span class="ms-fab-badge" aria-hidden="true"></span>',
+              '</button>',
+              '<button id="fab-locate" class="ms-fab-locate" type="button" aria-label="Meinen Standort anzeigen">',
+                '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3h-1.99A7.02 7.02 0 0 0 13 5.05V3.06a1 1 0 1 0-2 0v1.99A7.02 7.02 0 0 0 5.05 11H3.06a1 1 0 1 0 0 2h1.99A7.02 7.02 0 0 0 11 18.95v1.99a1 1 0 1 0 2 0v-1.99A7.02 7.02 0 0 0 18.95 13h1.99a1 1 0 1 0 0-2zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"></path></svg>',
+              '</button>',
+            '</div>',
             '<div id="ms-placeholder-modal" class="ms-modal ms-hidden" aria-hidden="true">',
               '<div class="ms-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-placeholder-title">',
                 '<button id="ms-placeholder-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
@@ -600,6 +644,7 @@
           }
         }
 
+        removeLegacyHeaderIfPresent();
         ensureMobileRedesignDom();
         if(document.body){ document.body.classList.add('ms-mobile-redesign'); }
 
@@ -610,11 +655,14 @@
         var sideBackdrop = document.getElementById('ms-side-backdrop');
         var sideClose = document.getElementById('ms-side-close');
         var submitHeaderBtn = document.getElementById('ms-header-submit');
+        var fabStack = document.getElementById('ms-fab-stack');
         var filterFab = document.getElementById('fab-filter');
+        var locateFab = document.getElementById('fab-locate');
+        var bottomSheet = document.getElementById('ms-bottom-sheet');
         var placeholderModal = document.getElementById('ms-placeholder-modal');
         var placeholderText = document.getElementById('ms-placeholder-text');
         var placeholderClose = document.getElementById('ms-placeholder-close');
-        if(!header || !standNode || !navToggle || !sideSheet || !sideBackdrop || !filterFab){ return; }
+        if(!header || !standNode || !navToggle || !sideSheet || !sideBackdrop || !filterFab || !bottomSheet){ return; }
 
         var lastOpener = null;
 
@@ -637,11 +685,11 @@
         }
 
         function openBottomSheet(){
-          var sheet = document.getElementById('ms-bottom-sheet');
-          if(!sheet){ return; }
-          sheet.classList.add('open');
-          sheet.setAttribute('aria-hidden', 'false');
+          if(!bottomSheet){ return; }
+          bottomSheet.classList.add('open');
+          bottomSheet.setAttribute('aria-hidden', 'false');
           syncMobileControlVisibility(true);
+          syncFabStackVisibility();
         }
 
         function openInfoModal(){
@@ -699,6 +747,7 @@
         function closeSideSheet(returnFocus){
           sideSheet.classList.remove('is-open');
           sideSheet.setAttribute('aria-hidden', 'true');
+          sideSheet.setAttribute('aria-modal', 'false');
           sideBackdrop.classList.remove('is-open');
           sideBackdrop.setAttribute('hidden', 'hidden');
           navToggle.setAttribute('aria-expanded', 'false');
@@ -713,6 +762,7 @@
           sideBackdrop.removeAttribute('hidden');
           sideSheet.classList.add('is-open');
           sideSheet.setAttribute('aria-hidden', 'false');
+          sideSheet.setAttribute('aria-modal', 'true');
           sideBackdrop.classList.add('is-open');
           navToggle.setAttribute('aria-expanded', 'true');
           document.body.classList.add('ms-side-open');
@@ -726,36 +776,61 @@
           else { openSideSheet(navToggle); }
         }
 
-        function bindPress(el, handler, useNonPassiveTouch){
+        function bindPress(el, handler){
           if(!el || typeof handler !== 'function'){ return; }
-          var lastPointerStamp = 0;
+          var lastPressStamp = 0;
           function wrapped(ev){
-            if(ev && ev.type !== 'click'){
-              lastPointerStamp = Date.now();
-            } else if(Date.now() - lastPointerStamp < 420){
-              return;
-            }
+            var now = Date.now();
+            if(now - lastPressStamp < 320){ return; }
+            lastPressStamp = now;
             if(ev && ev.preventDefault){ ev.preventDefault(); }
             handler(ev);
           }
-          el.addEventListener('click', wrapped);
-          el.addEventListener('pointerup', wrapped);
-          el.addEventListener('touchstart', wrapped, { passive: useNonPassiveTouch ? false : true });
+          if(window.PointerEvent){
+            el.addEventListener('pointerup', wrapped);
+            el.addEventListener('click', wrapped);
+          } else {
+            el.addEventListener('touchend', wrapped, { passive: false });
+            el.addEventListener('click', wrapped);
+          }
+        }
+
+        function syncFabStackVisibility(){
+          if(!fabStack){ return; }
+          var hidden = !!(bottomSheet && bottomSheet.classList.contains('open'));
+          fabStack.classList.toggle('is-hidden', hidden);
+          fabStack.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+        }
+
+        function removeBottomSheetExtraActions(){
+          if(!bottomSheet){ return; }
+          var submitSheet = bottomSheet.querySelector('#ms-submit-btn-sheet');
+          if(submitSheet && submitSheet.parentNode){ submitSheet.parentNode.removeChild(submitSheet); }
+          var byIdFeedback = bottomSheet.querySelector('#gb-feedback-control, #gb-feedback-control-sheet');
+          if(byIdFeedback && byIdFeedback.parentNode){ byIdFeedback.parentNode.removeChild(byIdFeedback); }
+          var possibleActions = bottomSheet.querySelectorAll('button, a');
+          possibleActions.forEach(function(node){
+            var text = (node.textContent || '').trim().toLowerCase();
+            if(text === 'feedback' || text.indexOf('nistplatz melden') !== -1){
+              if(node.parentNode){ node.parentNode.removeChild(node); }
+            }
+          });
         }
 
         standNode.textContent = extractStandText();
 
-        bindPress(navToggle, toggleSideSheet, true);
-        bindPress(sideClose, function(){ closeSideSheet(true); }, true);
-        bindPress(sideBackdrop, function(){ closeSideSheet(true); }, true);
-        bindPress(filterFab, function(){ openBottomSheet(); }, true);
+        bindPress(navToggle, toggleSideSheet);
+        bindPress(sideClose, function(){ closeSideSheet(true); });
+        bindPress(sideBackdrop, function(){ closeSideSheet(true); });
+        bindPress(filterFab, function(){ openBottomSheet(); });
+        bindPress(locateFab, function(){ requestUserLocation(); });
 
         if(submitHeaderBtn){
           bindPress(submitHeaderBtn, function(){
             var submitLink = document.getElementById('ms-submit-continue');
             var url = submitLink ? submitLink.getAttribute('href') : null;
             if(url){ window.open(url, '_blank'); }
-          }, true);
+          });
         }
 
         sideSheet.addEventListener('keydown', function(ev){
@@ -796,6 +871,14 @@
         if(placeholderModal){
           placeholderModal.addEventListener('click', function(ev){ if(ev.target === placeholderModal){ closePlaceholder(); } });
         }
+
+        if(bottomSheet && typeof MutationObserver !== 'undefined'){
+          var sheetObserver = new MutationObserver(syncFabStackVisibility);
+          sheetObserver.observe(bottomSheet, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        removeBottomSheetExtraActions();
+        syncFabStackVisibility();
 
         sideSheet.addEventListener('click', function(ev){
           var item = ev.target && ev.target.closest ? ev.target.closest('[data-ms-nav-action]') : null;
@@ -843,7 +926,7 @@
             updateFabActiveState();
           }
         });
-        setTimeout(updateFabActiveState, 320);
+        setTimeout(function(){ updateFabActiveState(); syncFabStackVisibility(); }, 320);
       })();
 
       // initial pass
@@ -854,7 +937,12 @@
           if(MS.map && MS.map.options){ MS.map.options.closePopupOnClick = false; }
         }catch(e){}
         initMarkers();
+        removeNativeMapControlsOnMobile();
         addLocateMapControl();
+        window.addEventListener('resize', function(){
+          removeNativeMapControlsOnMobile();
+          addLocateMapControl();
+        }, { passive: true });
         if(MS.map && typeof MS.map.on === 'function'){
           MS.map.on('popupopen', function(e){
             MS.popupVisible = true; syncMobileControlVisibility();
