@@ -5,6 +5,8 @@
       var ALL_SPECIES = Object.keys(SPECIES_COLORS_JS);
       var ALL_STATUS = Object.keys(STATUS_INFO_JS);
       var FEEDBACK_MAILTO = 'mailto:detlefdev@gmail.com?subject=Feedback%20zur%20Karte';
+      var CONTACT_MAILTO = 'mailto:detlefdev@gmail.com?subject=Kontakt%20zur%20Karte';
+      var NABU_LOGO_LINK = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/index.html';
       // Cluster-aware filtering support (always AND across groups)
       var MS = { map:null, cluster:null, markers:[], ready:false, userMarker:null, userAccuracyCircle:null, locationBound:false, locationToastTimer:null, locateControl:null, popupVisible:false };
       var MS_MOBILE_MEDIA = (window.matchMedia ? window.matchMedia('(max-width: 600px)') : null);
@@ -348,14 +350,14 @@
         var sheet = document.getElementById('ms-bottom-sheet');
         function openModal(ev){
           if(ev){ ev.preventDefault(); }
-          if(sheet){ sheet.classList.remove('open'); }
+          if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
           if(modal){ modal.classList.remove('ms-hidden'); }
           syncHeaderLayeringOverModals();
           syncMobileControlVisibility();
         }
         function closeModal(){
           if(modal){ modal.classList.add('ms-hidden'); }
-          if(sheet){ sheet.classList.remove('open'); }
+          if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
           syncHeaderLayeringOverModals();
           syncMobileControlVisibility();
         }
@@ -375,7 +377,7 @@
         var submitClose = document.getElementById('ms-submit-close');
         var submitCancel = document.getElementById('ms-submit-cancel');
         var sheet = document.getElementById('ms-bottom-sheet');
-        function openSubmit(ev){ if(ev){ ev.preventDefault(); } if(sheet){ sheet.classList.remove('open'); } if(submitModal){ submitModal.classList.remove('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
+        function openSubmit(ev){ if(ev){ ev.preventDefault(); } if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); } if(submitModal){ submitModal.classList.remove('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         function closeSubmit(){ if(submitModal){ submitModal.classList.add('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         if(submitBtn){ submitBtn.addEventListener('click', openSubmit); }
         var submitSheetBtn = document.getElementById('ms-submit-btn-sheet');
@@ -633,6 +635,7 @@
             if(isCompactViewport()){
               if(sheet){
                 sheet.classList.toggle('open');
+                sheet.setAttribute('aria-hidden', sheet.classList.contains('open') ? 'false' : 'true');
                 if(!sheet.classList.contains('open')){ syncMobileControlVisibility(); }
               }
             } else if(ctrl){
@@ -656,7 +659,7 @@
         if(applyMobile){
           applyMobile.addEventListener('click', function(){
             applyFilters();
-            if(sheet){ sheet.classList.remove('open'); }
+            if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
           });
         }
         if(applyDesktop){
@@ -690,7 +693,7 @@
       (function(){
         var sheet = document.getElementById('ms-bottom-sheet');
         if(!sheet) return;
-        sheet.addEventListener('click', function(ev){ if(ev.target === sheet){ sheet.classList.remove('open'); } });
+        sheet.addEventListener('click', function(ev){ if(ev.target === sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); } });
         // also close sheet when tapping the map area (leaflet container) or touching outside the sheet
         function closeIfMapTap(ev){
           try{
@@ -700,7 +703,7 @@
             // if tap/click occurred inside the sheet, ignore
             if(target.closest && target.closest('.ms-bottom-sheet')) return;
             // if tap/click occurred inside a leaflet map container, close the sheet
-            if(target.closest && target.closest('.leaflet-container')){ sheet.classList.remove('open'); }
+            if(target.closest && target.closest('.leaflet-container')){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
           }catch(e){}
         }
         document.addEventListener('click', closeIfMapTap, {passive:true});
@@ -784,17 +787,20 @@
               '</div>',
               '<nav class="ms-side-nav" aria-label="Hauptnavigation">',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg></span><span>Filter</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teile Karte</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="info"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11 10h2v7h-2zm0-4h2v2h-2z"></path><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path></svg></span><span>Info &amp; Hilfe</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teile Karte</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg></span><span>Sende Feedback</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
                 '<div class="ms-side-divider" role="separator" aria-hidden="true"></div>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="terms"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Nutzungsbedingungen</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="legal"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutzerklärung</span></button>',
+                '<div class="ms-side-section-label">Rechtliches</div>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-imprint"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Impressum</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-privacy"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Datenschutzerklärung</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
               '</nav>',
               '<div class="ms-side-footer">',
                 '<div class="ms-side-logo-wrap">',
-                  '<img class="ms-side-logo" src="images/logo_bgsz.svg" alt="NABU Bezirksgruppe Steglitz-Zehlendorf" onerror="if(!this.dataset.fallback1){this.dataset.fallback1=\'1\';this.src=\'docs/images/logo_bgsz.svg\';}else{this.style.display=\'none\';}">',
+                  '<a class="ms-side-logo-link" href="' + NABU_LOGO_LINK + '" target="_blank" rel="noopener noreferrer" aria-label="NABU Bezirksgruppe Steglitz-Zehlendorf">',
+                    '<img class="ms-side-logo" src="images/logo_bgsz.svg" alt="NABU Bezirksgruppe Steglitz-Zehlendorf" onerror="if(!this.dataset.fallback1){this.dataset.fallback1=\'1\';this.src=\'docs/images/logo_bgsz.svg\';}else{this.style.display=\'none\';}">',
+                  '</a>',
                 '</div>',
               '</div>',
             '</aside>',
@@ -892,6 +898,9 @@
         function showShareToast(message){
           showMobileLocationToast(message || 'Link kopiert.');
         }
+        function openContactLink(){
+          try{ window.location.href = CONTACT_MAILTO; }catch(e){}
+        }
         function shareCurrentMap(){
           var url = window.location.href;
           if(navigator.share){
@@ -923,8 +932,7 @@
           var modal = document.getElementById('ms-info-modal');
           if(!modal){ return; }
           if(mobileRefs && mobileRefs.bottomSheet){
-            mobileRefs.bottomSheet.classList.remove('open');
-            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+            closeBottomSheet();
           }
           modal.classList.remove('ms-hidden');
           syncHeaderLayeringOverModals();
@@ -935,12 +943,19 @@
           var modal = document.getElementById('ms-submit-modal');
           if(!modal){ return; }
           if(mobileRefs && mobileRefs.bottomSheet){
-            mobileRefs.bottomSheet.classList.remove('open');
-            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+            closeBottomSheet();
           }
           modal.classList.remove('ms-hidden');
           syncHeaderLayeringOverModals();
           syncMobileControlVisibility();
+        }
+
+        function closeBottomSheet(){
+          if(!mobileRefs || !mobileRefs.bottomSheet){ return; }
+          mobileRefs.bottomSheet.classList.remove('open');
+          mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+          mobileRefs.bottomSheet.style.removeProperty('transform');
+          syncFabStackVisibility();
         }
 
         function openBottomSheet(){
@@ -948,6 +963,7 @@
           if(mobileRefs.sideSheet && mobileRefs.sideSheet.classList.contains('is-open')){ closeSideSheet(false); }
           mobileRefs.bottomSheet.classList.add('open');
           mobileRefs.bottomSheet.setAttribute('aria-hidden', 'false');
+          mobileRefs.bottomSheet.style.removeProperty('transform');
           syncFabStackVisibility();
           syncHeaderLayeringOverModals();
           syncMobileControlVisibility(true);
@@ -970,8 +986,7 @@
         function openSideSheet(opener){
           if(!mobileRefs){ return; }
           if(mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){
-            mobileRefs.bottomSheet.classList.remove('open');
-            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+            closeBottomSheet();
           }
           mobileRefs.__lastOpener = opener || mobileRefs.navToggle;
           mobileRefs.sideBackdrop.removeAttribute('hidden');
@@ -1021,6 +1036,71 @@
             });
           }
 
+          (function setupSidebarSwipe(){
+            var startX = 0;
+            var startTime = 0;
+            var active = false;
+            addCleanup(mobileRefs.sideSheet, 'pointerdown', function(ev){
+              if(!mobileRefs.sideSheet.classList.contains('is-open')){ return; }
+              if(ev.pointerType === 'mouse' && ev.button !== 0){ return; }
+              active = true;
+              startX = ev.clientX;
+              startTime = Date.now();
+            }, { passive: true });
+            addCleanup(mobileRefs.sideSheet, 'pointerup', function(ev){
+              if(!active){ return; }
+              active = false;
+              var dx = ev.clientX - startX;
+              var dt = Math.max(1, Date.now() - startTime);
+              var velocity = Math.abs(dx) / dt;
+              if(dx <= -52 || (dx <= -32 && velocity > 0.5)){ closeSideSheet(true); }
+            }, { passive: true });
+            addCleanup(mobileRefs.sideSheet, 'pointercancel', function(){ active = false; }, { passive: true });
+          })();
+
+          (function setupBottomSheetSwipe(){
+            var startY = 0;
+            var startTime = 0;
+            var dragging = false;
+            var sheet = mobileRefs.bottomSheet;
+            if(!sheet){ return; }
+            function canStart(target){
+              if(!target || !target.closest){ return false; }
+              return !!target.closest('.ms-sheet-handle, .ms-sheet-header');
+            }
+            addCleanup(sheet, 'pointerdown', function(ev){
+              if(!sheet.classList.contains('open')){ return; }
+              if(ev.pointerType === 'mouse' && ev.button !== 0){ return; }
+              if(!canStart(ev.target)){ return; }
+              dragging = true;
+              startY = ev.clientY;
+              startTime = Date.now();
+            }, { passive: true });
+            addCleanup(sheet, 'pointermove', function(ev){
+              if(!dragging){ return; }
+              var dy = Math.max(0, ev.clientY - startY);
+              if(dy > 0){
+                sheet.style.transform = 'translateY(' + Math.min(dy, 240) + 'px)';
+              }
+            }, { passive: true });
+            addCleanup(sheet, 'pointerup', function(ev){
+              if(!dragging){ return; }
+              dragging = false;
+              var dy = Math.max(0, ev.clientY - startY);
+              var dt = Math.max(1, Date.now() - startTime);
+              var velocity = dy / dt;
+              if(dy >= 56 || (dy >= 40 && velocity > 0.55)){
+                closeBottomSheet();
+              } else {
+                sheet.style.removeProperty('transform');
+              }
+            }, { passive: true });
+            addCleanup(sheet, 'pointercancel', function(){
+              dragging = false;
+              sheet.style.removeProperty('transform');
+            }, { passive: true });
+          })();
+
           addCleanup(mobileRefs.sideSheet, 'keydown', function(ev){
             if(ev.key === 'Escape'){
               ev.preventDefault();
@@ -1049,6 +1129,9 @@
           addCleanup(document, 'keydown', function(ev){
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.sideSheet.classList.contains('is-open')){
               closeSideSheet(true);
+            }
+            if(ev.key === 'Escape' && mobileRefs && mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){
+              closeBottomSheet();
             }
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.placeholderModal && !mobileRefs.placeholderModal.classList.contains('ms-hidden')){
               closePlaceholder();
@@ -1084,6 +1167,21 @@
             if(action === 'feedback'){
               closeSideSheet(false);
               try{ window.location.href = FEEDBACK_MAILTO; }catch(e){}
+              return;
+            }
+            if(action === 'contact'){
+              closeSideSheet(false);
+              openContactLink();
+              return;
+            }
+            if(action === 'legal-imprint'){
+              closeSideSheet(false);
+              openPlaceholder('Impressum wird in Kürze bereitgestellt.');
+              return;
+            }
+            if(action === 'legal-privacy'){
+              closeSideSheet(false);
+              openPlaceholder('Datenschutzerklärung wird in Kürze bereitgestellt.');
               return;
             }
           });
