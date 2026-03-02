@@ -120,16 +120,18 @@
         ].join('');
         document.body.appendChild(overlay);
         var closeBtn = overlay.querySelector('#ms-marker-modal-close');
-        function closeModal(){
-          overlay.classList.add('ms-hidden');
-          overlay.setAttribute('aria-hidden', 'true');
-        }
-        if(closeBtn){ closeBtn.addEventListener('click', closeModal); }
-        overlay.addEventListener('click', function(ev){ if(ev.target === overlay){ closeModal(); } });
+        if(closeBtn){ closeBtn.addEventListener('click', closeMarkerDetailsModal); }
+        overlay.addEventListener('click', function(ev){ if(ev.target === overlay){ closeMarkerDetailsModal(); } });
         document.addEventListener('keydown', function(ev){
-          if(ev.key === 'Escape' && !overlay.classList.contains('ms-hidden')){ closeModal(); }
+          if(ev.key === 'Escape' && !overlay.classList.contains('ms-hidden')){ closeMarkerDetailsModal(); }
         });
         return overlay;
+      }
+      function closeMarkerDetailsModal(){
+        var overlay = document.getElementById('ms-marker-modal');
+        if(!overlay){ return; }
+        overlay.classList.add('ms-hidden');
+        overlay.setAttribute('aria-hidden', 'true');
       }
       function openMarkerDetailsModalFromMarker(marker){
         if(!isMobile || !marker){ return; }
@@ -677,10 +679,17 @@
         var resetBtn = document.getElementById('ms-reset');
         var resetSheetBtn = document.getElementById('ms-reset-sheet');
         function resetFiltersToAll(){
+          // Keep existing filter reset logic unchanged.
           document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(el){ el.checked = true; });
           document.querySelectorAll('#ms-species-all, #ms-species-all-sheet, #ms-status-all, #ms-status-all-sheet').forEach(function(el){ el.checked = true; });
           rebuildCluster(Object.keys(SPECIES_COLORS_JS), Object.keys(STATUS_INFO_JS));
           updateFilterFabIndicator();
+          // Mobile parity: reset closes sheet just like apply.
+          if(sheet){
+            sheet.classList.remove('open');
+            sheet.setAttribute('aria-hidden', 'true');
+            sheet.style.removeProperty('transform');
+          }
         }
         if(resetBtn){
           resetBtn.addEventListener('click', resetFiltersToAll);
@@ -1025,6 +1034,14 @@
         function bindMobileEvents(){
           if(!mobileRefs){ return; }
 
+          // Close marker modal when tapping the sticky app header area.
+          addCleanup(mobileRefs.header, 'click', function(){
+            var markerModal = document.getElementById('ms-marker-modal');
+            if(markerModal && !markerModal.classList.contains('ms-hidden')){
+              closeMarkerDetailsModal();
+            }
+          });
+
           addDirectPressListener(mobileRefs.navToggle, function(){
             if(mobileRefs.sideSheet.classList.contains('is-open')){ closeSideSheet(true); }
             else { openSideSheet(mobileRefs.navToggle); }
@@ -1066,6 +1083,9 @@
             var startY = 0;
             var startTime = 0;
             var dragging = false;
+            var touchTracking = false;
+            var touchStartY = 0;
+            var touchBlocked = false;
             var sheet = mobileRefs.bottomSheet;
             if(!sheet){ return; }
             function canStart(target){
@@ -1102,6 +1122,36 @@
             addCleanup(sheet, 'pointercancel', function(){
               dragging = false;
               sheet.style.removeProperty('transform');
+            }, { passive: true });
+
+            // Local Android pull-to-refresh protection for sheet-only swipe-down.
+            addCleanup(sheet, 'touchstart', function(ev){
+              if(!sheet.classList.contains('open')){ return; }
+              if(!ev.touches || !ev.touches.length){ return; }
+              if(!canStart(ev.target)){ return; }
+              touchTracking = true;
+              touchBlocked = false;
+              touchStartY = ev.touches[0].clientY;
+            }, { passive: true });
+
+            addCleanup(sheet, 'touchmove', function(ev){
+              if(!touchTracking || !ev.touches || !ev.touches.length){ return; }
+              var dy = ev.touches[0].clientY - touchStartY;
+              if(dy > 28){
+                touchBlocked = true;
+                // preventDefault only while dragging down in sheet header area.
+                ev.preventDefault();
+              }
+            }, { passive: false });
+
+            addCleanup(sheet, 'touchend', function(){
+              touchTracking = false;
+              touchBlocked = false;
+            }, { passive: true });
+
+            addCleanup(sheet, 'touchcancel', function(){
+              touchTracking = false;
+              touchBlocked = false;
             }, { passive: true });
           })();
 

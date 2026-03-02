@@ -635,6 +635,8 @@ body.ms-mobile-redesign .ms-control {
   max-height: min(80vh, calc(100vh - var(--ms-header-height) - 8px));
   background: linear-gradient(to bottom, var(--ms-sheet-top-bg) 0, var(--ms-sheet-top-bg) 56px, var(--ms-sheet-bottom-bg) 56px, var(--ms-sheet-bottom-bg) 100%);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ms-safe-bottom-extra));
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
 }
 #ms-info-modal,
 #ms-submit-modal,
@@ -741,10 +743,46 @@ body.ms-side-open {
   }
 
   #ms-bottom-sheet .ms-sheet-header {
-    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 20px;
     color: #fff;
     border-bottom-color: rgba(255,255,255,0.22);
     background: transparent;
+    touch-action: pan-y;
+  }
+  #ms-bottom-sheet .ms-sheet-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: .01em;
+  }
+  #ms-more-info-toggle-sheet.ms-sheet-info-btn {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0;
+    background: transparent;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+  }
+  #ms-more-info-toggle-sheet.ms-sheet-info-btn:hover {
+    background: rgba(255,255,255,0.14);
+  }
+  #ms-more-info-toggle-sheet.ms-sheet-info-btn:active {
+    background: rgba(255,255,255,0.2);
+  }
+  #ms-bottom-sheet .ms-sheet-handle {
+    touch-action: none;
   }
   #ms-bottom-sheet .ms-sheet-handle {
     background: rgba(255,255,255,0.6);
