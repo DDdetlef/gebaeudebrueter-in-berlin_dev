@@ -417,13 +417,13 @@ body.ms-mobile-redesign .ms-control {
   touch-action: manipulation;
 }
 .ms-icon-btn-accent {
-  background: var(--nabu-blue);
+  background: hsl(31, 100%, 47%);
   color: #fff;
-  border-color: var(--nabu-blue);
+  border-color: hsl(31, 100%, 47%);
 }
 .ms-icon-btn:hover { background: #f5f7fa; }
-.ms-icon-btn-accent:hover { background: hsl(205, 100%, 31%); }
-.ms-icon-btn-accent:active { background: hsl(205, 100%, 28%); }
+.ms-icon-btn-accent:hover { background: hsl(31, 100%, 42%); }
+.ms-icon-btn-accent:active { background: hsl(31, 100%, 38%); }
 .ms-icon-btn:active { transform: translateY(1px); }
 .ms-icon-btn:focus-visible,
 .ms-side-item:focus-visible,
@@ -633,7 +633,7 @@ body.ms-mobile-redesign .ms-control {
 #ms-bottom-sheet {
   z-index: 10060 !important;
   max-height: min(80vh, calc(100vh - var(--ms-header-height) - 8px));
-  background: linear-gradient(to bottom, var(--ms-sheet-top-bg) 0, var(--ms-sheet-top-bg) 78px, var(--ms-sheet-bottom-bg) 78px, var(--ms-sheet-bottom-bg) 100%);
+  background: linear-gradient(to bottom, var(--ms-sheet-top-bg) 0, var(--ms-sheet-top-bg) 56px, var(--ms-sheet-bottom-bg) 56px, var(--ms-sheet-bottom-bg) 100%);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ms-safe-bottom-extra));
 }
 #ms-info-modal,

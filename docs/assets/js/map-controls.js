@@ -964,6 +964,10 @@
           mobileRefs.bottomSheet.classList.add('open');
           mobileRefs.bottomSheet.setAttribute('aria-hidden', 'false');
           mobileRefs.bottomSheet.style.removeProperty('transform');
+          var speciesAccordion = document.getElementById('ms-species-accordion-content');
+          var statusAccordion = document.getElementById('ms-status-accordion-content');
+          if(speciesAccordion){ speciesAccordion.classList.add('open'); }
+          if(statusAccordion){ statusAccordion.classList.add('open'); }
           syncFabStackVisibility();
           syncHeaderLayeringOverModals();
           syncMobileControlVisibility(true);
