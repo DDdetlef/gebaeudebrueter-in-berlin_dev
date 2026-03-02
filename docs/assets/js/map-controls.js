@@ -11,6 +11,8 @@
         if(MS_MOBILE_MEDIA){ return !!MS_MOBILE_MEDIA.matches; }
         return !!(window.innerWidth && window.innerWidth <= 600);
       }
+      var isMobile = isMobileView();
+      try{ window.isMobile = isMobile; }catch(e){}
       function syncViewportCssVars(){
         var vh = window.innerHeight || document.documentElement.clientHeight || 0;
         if(vh > 0){
@@ -79,8 +81,84 @@
         MS.markers.forEach(function(m){
           var html = (m.options && m.options.icon && m.options.icon.options && m.options.icon.options.html) || '';
           m._ms = parseMetaFromIconHtml(html);
+          if(!m._msPopup && typeof m.getPopup === 'function'){
+            try{ m._msPopup = m.getPopup(); }catch(e){ m._msPopup = null; }
+          }
         });
         MS.ready = true;
+      }
+      function ensureMarkerDetailsModal(){
+        var existing = document.getElementById('ms-marker-modal');
+        if(existing){ return existing; }
+        if(!document.body){ return null; }
+        var overlay = document.createElement('div');
+        overlay.id = 'ms-marker-modal';
+        overlay.className = 'ms-modal ms-hidden';
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.innerHTML = [
+          '<div class="ms-modal-content ms-marker-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-marker-modal-title">',
+            '<button id="ms-marker-modal-close" class="ms-modal-close" aria-label="Schließen">✕</button>',
+            '<h2 id="ms-marker-modal-title" class="ms-modal-title">Fundortdetails</h2>',
+            '<div id="ms-marker-modal-body" class="ms-marker-modal-scroll"></div>',
+          '</div>'
+        ].join('');
+        document.body.appendChild(overlay);
+        var closeBtn = overlay.querySelector('#ms-marker-modal-close');
+        function closeModal(){
+          overlay.classList.add('ms-hidden');
+          overlay.setAttribute('aria-hidden', 'true');
+        }
+        if(closeBtn){ closeBtn.addEventListener('click', closeModal); }
+        overlay.addEventListener('click', function(ev){ if(ev.target === overlay){ closeModal(); } });
+        document.addEventListener('keydown', function(ev){
+          if(ev.key === 'Escape' && !overlay.classList.contains('ms-hidden')){ closeModal(); }
+        });
+        return overlay;
+      }
+      function openMarkerDetailsModalFromMarker(marker){
+        if(!isMobile || !marker){ return; }
+        var overlay = ensureMarkerDetailsModal();
+        if(!overlay){ return; }
+        var body = overlay.querySelector('#ms-marker-modal-body');
+        if(!body){ return; }
+        var popup = marker._msPopup || (typeof marker.getPopup === 'function' ? marker.getPopup() : null);
+        if(!popup){ return; }
+        var content = (typeof popup.getContent === 'function') ? popup.getContent() : null;
+        if(content && content.nodeType === 1){ body.innerHTML = content.outerHTML; }
+        else { body.innerHTML = String(content || 'Keine Detaildaten verfügbar.'); }
+        overlay.classList.remove('ms-hidden');
+        overlay.setAttribute('aria-hidden', 'false');
+      }
+      function bindMarkersForViewportMode(){
+        if(!MS.markers || !MS.markers.length){ return; }
+        MS.markers.forEach(function(marker){
+          if(!marker){ return; }
+          if(!marker._msPopup && typeof marker.getPopup === 'function'){
+            try{ marker._msPopup = marker.getPopup(); }catch(e){ marker._msPopup = null; }
+          }
+          if(!marker._msMobileClickHandler){
+            marker._msMobileClickHandler = function(ev){
+              if(!isMobile){ return; }
+              try{
+                if(ev && ev.originalEvent && typeof ev.originalEvent.preventDefault === 'function'){ ev.originalEvent.preventDefault(); }
+              }catch(e){}
+              try{ if(MS.map && typeof MS.map.closePopup === 'function'){ MS.map.closePopup(); } }catch(err){}
+              openMarkerDetailsModalFromMarker(marker);
+            };
+          }
+          if(isMobile){
+            try{ marker.off('click', marker._msMobileClickHandler); }catch(e){}
+            try{ marker.on('click', marker._msMobileClickHandler); }catch(e){}
+            if(marker._msPopup){
+              try{ marker.unbindPopup(); }catch(e){}
+            }
+          } else {
+            try{ marker.off('click', marker._msMobileClickHandler); }catch(e){}
+            if(marker._msPopup && typeof marker.getPopup === 'function' && !marker.getPopup()){
+              try{ marker.bindPopup(marker._msPopup); }catch(e){}
+            }
+          }
+        });
       }
       function removeUserLocationLayers(){
         if(MS.map && MS.userMarker){ try{ MS.map.removeLayer(MS.userMarker); }catch(e){} }
@@ -286,11 +364,6 @@
         if(submitBtn){ submitBtn.addEventListener('click', openSubmit); }
         var submitSheetBtn = document.getElementById('ms-submit-btn-sheet');
         if(submitSheetBtn){ submitSheetBtn.addEventListener('click', openSubmit); }
-        document.addEventListener('click', function(ev){
-          var trigger = ev && ev.target && ev.target.closest ? ev.target.closest('#ms-submit-btn, #ms-submit-btn-sheet') : null;
-          if(!trigger){ return; }
-          openSubmit(ev);
-        }, true);
         function isActuallyVisible(el){
           if(!el) return false;
           // getClientRects is empty when display:none or not in layout
@@ -492,40 +565,62 @@
         var selectedStatus = Array.from(document.querySelectorAll('.ms-filter-status:checked')).map(function(el){ return el.value; });
         if(!MS.ready){ setTimeout(function(){ rebuildCluster(selectedSpecies, selectedStatus); }, 150); }
         else { rebuildCluster(selectedSpecies, selectedStatus); }
+        updateFilterFabIndicator();
+      }
+      function updateFilterFabIndicator(){
+        var filterFab = document.getElementById('fab-filter');
+        if(!filterFab){ return; }
+        var speciesBoxes = document.querySelectorAll('.ms-filter-species');
+        var statusBoxes = document.querySelectorAll('.ms-filter-status');
+        if(!speciesBoxes.length || !statusBoxes.length){
+          filterFab.classList.remove('is-active');
+          return;
+        }
+        var speciesChecked = Array.prototype.filter.call(speciesBoxes, function(el){ return el.checked; }).length;
+        var statusChecked = Array.prototype.filter.call(statusBoxes, function(el){ return el.checked; }).length;
+        var allSelected = speciesChecked === speciesBoxes.length && statusChecked === statusBoxes.length;
+        filterFab.classList.toggle('is-active', !allSelected);
       }
       function wireFilters(){
-        // sync desktop and sheet 'Alle' boxes and checkboxes by class
-        document.addEventListener('change', function(ev){ if(ev.target && ev.target.classList){ if(ev.target.classList.contains('ms-filter-species') || ev.target.classList.contains('ms-filter-status')){ var boxes = Array.from(document.querySelectorAll(ev.target.tagName+'[value]')).filter(function(x){ return x.value === ev.target.value && x !== ev.target; }); boxes.forEach(function(b){ b.checked = ev.target.checked; }); }
-          // sync 'Alle' behavior
-          if(ev.target.id === 'ms-species-all' || ev.target.id === 'ms-species-all-sheet'){ var check = ev.target.checked; document.querySelectorAll('#ms-species-row input[type=checkbox], #ms-species-accordion-content input[type=checkbox]').forEach(function(cb){ if(cb !== ev.target) cb.checked = check; }); }
-          if(ev.target.id === 'ms-status-all' || ev.target.id === 'ms-status-all-sheet'){ var check = ev.target.checked; document.querySelectorAll('#ms-status-row input[type=checkbox], #ms-status-accordion-content input[type=checkbox]').forEach(function(cb){ if(cb !== ev.target) cb.checked = check; }); }
-        }});
-      }
-       // wire controls (desktop: expand/collapse box via Filter, explicit 'Filter anwenden'; mobile: open sheet)
-      document.addEventListener('click', function(ev){
+        function bindChange(el, handler){
+          if(!el){ return; }
+          el.addEventListener('change', handler);
+        }
+        function syncByValue(source){
+          if(!source){ return; }
+          var selector = source.classList.contains('ms-filter-species') ? '.ms-filter-species' : '.ms-filter-status';
+          document.querySelectorAll(selector).forEach(function(cb){
+            if(cb !== source && cb.value === source.value){ cb.checked = source.checked; }
+          });
+        }
+        function setGroupChecked(group, checked, source){
+          document.querySelectorAll(group).forEach(function(cb){ if(cb !== source){ cb.checked = checked; } });
+        }
+        document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(input){
+          bindChange(input, function(ev){ syncByValue(ev.target); updateFilterFabIndicator(); });
+        });
+        var speciesAllDesktop = document.getElementById('ms-species-all');
+        var speciesAllSheet = document.getElementById('ms-species-all-sheet');
+        var statusAllDesktop = document.getElementById('ms-status-all');
+        var statusAllSheet = document.getElementById('ms-status-all-sheet');
+        bindChange(speciesAllDesktop, function(ev){ setGroupChecked('#ms-species-row input[type=checkbox], #ms-species-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+        bindChange(speciesAllSheet, function(ev){ setGroupChecked('#ms-species-row input[type=checkbox], #ms-species-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+        bindChange(statusAllDesktop, function(ev){ setGroupChecked('#ms-status-row input[type=checkbox], #ms-status-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+        bindChange(statusAllSheet, function(ev){ setGroupChecked('#ms-status-row input[type=checkbox], #ms-status-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+
         var openBtn = document.getElementById('ms-open-sheet');
         var sheet = document.getElementById('ms-bottom-sheet');
         var ctrl = document.getElementById('ms-control');
-        var openBtnClicked = false;
-        if(openBtn && ev.target){
-          if(ev.target === openBtn){
-            openBtnClicked = true;
-          } else if(ev.target.closest && ev.target.closest('#ms-open-sheet')){
-            openBtnClicked = true;
-          }
-        }
-        // Filter button toggles desktop box or opens mobile sheet
-        if(openBtnClicked){
-          syncMobileControlVisibility(true);
-          if(isCompactViewport()){
-            if(sheet){
-              sheet.classList.toggle('open');
-              if(!sheet.classList.contains('open')){ syncMobileControlVisibility(); }
-            }
-          } else {
-            if(ctrl){
+        if(openBtn){
+          openBtn.addEventListener('click', function(){
+            syncMobileControlVisibility(true);
+            if(isCompactViewport()){
+              if(sheet){
+                sheet.classList.toggle('open');
+                if(!sheet.classList.contains('open')){ syncMobileControlVisibility(); }
+              }
+            } else if(ctrl){
               ctrl.classList.toggle('collapsed');
-              // after expanding, re-run sizing so widths are measured when visible
               if(!ctrl.classList.contains('collapsed')){
                 try{ if(window.requestAnimationFrame){ requestAnimationFrame(function(){ requestAnimationFrame(function(){
                   var btn = document.getElementById('gb-feedback-control');
@@ -537,32 +632,39 @@
                 }); }); } }catch(e){}
               }
             }
-          }
+          });
         }
-        // apply buttons
-        if(ev.target && (ev.target.id === 'ms-apply-filters' || ev.target.id === 'ms-apply-desktop')){
-          applyFilters();
-          if(sheet && ev.target.id === 'ms-apply-filters'){ sheet.classList.remove('open'); }
+
+        var applyMobile = document.getElementById('ms-apply-filters');
+        var applyDesktop = document.getElementById('ms-apply-desktop');
+        if(applyMobile){
+          applyMobile.addEventListener('click', function(){
+            applyFilters();
+            if(sheet){ sheet.classList.remove('open'); }
+          });
         }
-        // accordion toggles in bottom sheet
-        if(ev.target && ev.target.classList && ev.target.classList.contains('ms-accordion-toggle')){
-          var t = ev.target.getAttribute('data-target');
-          var node = document.getElementById(t);
-          if(node){ node.classList.toggle('open'); }
+        if(applyDesktop){
+          applyDesktop.addEventListener('click', function(){ applyFilters(); });
         }
-      });
-      // reset button
-      document.addEventListener('click', function(ev){
-        if(ev.target && ev.target.id === 'ms-reset'){
-          // re-activate all species/status checkboxes
-          document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(el){ el.checked = true; });
-          // re-activate "Alle" toggles in desktop + sheet
-          document.querySelectorAll('#ms-species-all, #ms-species-all-sheet, #ms-status-all, #ms-status-all-sheet').forEach(function(el){ el.checked = true; });
-          var selectedSpecies = Object.keys(SPECIES_COLORS_JS);
-          var selectedStatus = Object.keys(STATUS_INFO_JS);
-          rebuildCluster(selectedSpecies, selectedStatus);
+
+        document.querySelectorAll('.ms-accordion-toggle').forEach(function(toggle){
+          toggle.addEventListener('click', function(){
+            var targetId = toggle.getAttribute('data-target');
+            var node = targetId ? document.getElementById(targetId) : null;
+            if(node){ node.classList.toggle('open'); }
+          });
+        });
+
+        var resetBtn = document.getElementById('ms-reset');
+        if(resetBtn){
+          resetBtn.addEventListener('click', function(){
+            document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(el){ el.checked = true; });
+            document.querySelectorAll('#ms-species-all, #ms-species-all-sheet, #ms-status-all, #ms-status-all-sheet').forEach(function(el){ el.checked = true; });
+            rebuildCluster(Object.keys(SPECIES_COLORS_JS), Object.keys(STATUS_INFO_JS));
+            updateFilterFabIndicator();
+          });
         }
-      });
+      }
       // close bottom sheet when tapping backdrop
       (function(){
         var sheet = document.getElementById('ms-bottom-sheet');
@@ -596,7 +698,7 @@
             if(MS.map && typeof MS.map.invalidateSize === 'function'){
               try{ MS.map.invalidateSize(true); }catch(e){}
             }
-          }, 0);
+          }, 40);
         }
 
         function addCleanup(target, eventName, handler, options){
@@ -628,7 +730,7 @@
         function setDesktopControlVisibility(){
           var ctrl = document.getElementById('ms-control');
           if(!ctrl){ return; }
-          if(isMobileView()){
+          if(isMobile){
             ctrl.style.display = 'none';
             ctrl.classList.add('ms-overlay-hidden');
             ctrl.setAttribute('aria-hidden', 'true');
@@ -660,12 +762,12 @@
                 '<button id="ms-side-close" class="ms-icon-btn" type="button" aria-label="Menü schließen">✕</button>',
               '</div>',
               '<nav class="ms-side-nav" aria-label="Hauptnavigation">',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon">⚲</span><span>Filter</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="info"><span class="ms-side-icon">ⓘ</span><span>Mehr Infos</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon">✉</span><span>Feedback</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg></span><span>Filter</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teile Karte</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
+                '<div class="ms-side-divider" role="separator" aria-hidden="true"></div>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="terms"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Nutzungsbedingungen</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="legal"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutzerklärung</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
               '</nav>',
             '</aside>',
             '<div id="ms-fab-stack" class="ms-fab-stack" aria-hidden="false">',
@@ -757,6 +859,29 @@
           if(!mobileRefs || !mobileRefs.placeholderModal){ return; }
           mobileRefs.placeholderModal.classList.add('ms-hidden');
           mobileRefs.placeholderModal.setAttribute('aria-hidden', 'true');
+        }
+        function showShareToast(message){
+          showMobileLocationToast(message || 'Link kopiert.');
+        }
+        function shareCurrentMap(){
+          var url = window.location.href;
+          if(navigator.share){
+            navigator.share({
+              title: 'Gebäudebrüter in Berlin',
+              text: 'Karte der Gebäudebrüter in Berlin',
+              url: url
+            }).catch(function(){});
+            return;
+          }
+          if(navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
+            navigator.clipboard.writeText(url).then(function(){
+              showShareToast('Link zur Karte wurde kopiert.');
+            }).catch(function(){
+              showShareToast('Kopieren nicht möglich.');
+            });
+            return;
+          }
+          showShareToast('Kopieren nicht unterstützt.');
         }
 
         function syncFabStackVisibility(){
@@ -890,31 +1015,20 @@
               openBottomSheet();
               return;
             }
-            if(action === 'info'){
+            if(action === 'share'){
               closeSideSheet(false);
-              var infoModal = document.getElementById('ms-info-modal');
-              if(infoModal){ infoModal.classList.remove('ms-hidden'); }
+              shareCurrentMap();
               return;
-            }
-            if(action === 'feedback'){
-              closeSideSheet(false);
-              var feedbackControl = document.getElementById('gb-feedback-control');
-              if(feedbackControl && typeof feedbackControl.click === 'function'){ feedbackControl.click(); }
-              else { openPlaceholder('Feedback-Bereich konnte nicht geöffnet werden.'); }
             }
           });
 
           addCleanup(document, 'change', function(ev){
-            if(!mobileRefs || !ev || !ev.target || !ev.target.classList){ return; }
-            if(ev.target.classList.contains('ms-filter-species') || ev.target.classList.contains('ms-filter-status') || /^ms-(species|status)-all/.test(ev.target.id || '')){
-              var speciesBoxes = document.querySelectorAll('.ms-filter-species');
-              var statusBoxes = document.querySelectorAll('.ms-filter-status');
-              if(!speciesBoxes.length || !statusBoxes.length){ return; }
-              var speciesChecked = Array.prototype.filter.call(speciesBoxes, function(el){ return el.checked; }).length;
-              var statusChecked = Array.prototype.filter.call(statusBoxes, function(el){ return el.checked; }).length;
-              var allSelected = speciesChecked === speciesBoxes.length && statusChecked === statusBoxes.length;
-              mobileRefs.filterFab.classList.toggle('is-active', !allSelected);
+            if(!mobileRefs || !ev || !ev.target){ return; }
+            if(ev.target.classList && (ev.target.classList.contains('ms-filter-species') || ev.target.classList.contains('ms-filter-status'))){
+              updateFilterFabIndicator();
+              return;
             }
+            if(/^ms-(species|status)-all/.test(ev.target.id || '')){ updateFilterFabIndicator(); }
           });
 
           if(mobileRefs.bottomSheet && typeof MutationObserver !== 'undefined'){
@@ -924,7 +1038,7 @@
         }
 
         function mountMobileUi(){
-          if(mobileMounted || !isMobileView()){ return; }
+          if(mobileMounted || !isMobile){ return; }
           removeLegacyHeaderIfPresent();
           ensureMobileRedesignDom();
           mobileRefs = collectRefs();
@@ -938,6 +1052,7 @@
           removeBottomSheetExtraActions();
           bindMobileEvents();
           syncFabStackVisibility();
+          updateFilterFabIndicator();
           mobileMounted = true;
           safeInvalidateMap();
         }
@@ -953,33 +1068,59 @@
           safeInvalidateMap();
         }
 
-        function applyResponsiveUi(){
-          removeLegacyHeaderIfPresent();
-          if(isMobileView()){
-            mountMobileUi();
-          } else {
-            if(mobileMounted || document.getElementById('ms-mobile-root')){ unmountMobileUi(); }
-            setDesktopControlVisibility();
+        function teardownDesktop(){
+          if(MS.map && MS.locateControl && typeof MS.map.removeControl === 'function'){
+            try{ MS.map.removeControl(MS.locateControl); }catch(e){}
           }
-          if(isMobileView()){
-            removeNativeMapControlsOnMobile();
-          } else {
-            addLocateMapControl();
-            if(MS.map && MS.map.zoomControl && typeof MS.map.addControl === 'function'){
-              try{ MS.map.addControl(MS.map.zoomControl); }catch(e){}
-            }
-          }
+          MS.locateControl = null;
         }
 
-        applyResponsiveUi();
+        function initDesktop(){
+          setDesktopControlVisibility();
+          addLocateMapControl();
+          if(MS.map && MS.map.zoomControl && typeof MS.map.addControl === 'function'){
+            try{ MS.map.addControl(MS.map.zoomControl); }catch(e){}
+          }
+          bindMarkersForViewportMode();
+        }
+
+        function teardownMobile(){
+          if(mobileMounted || document.getElementById('ms-mobile-root')){ unmountMobileUi(); }
+        }
+
+        function initMobile(){
+          mountMobileUi();
+          removeNativeMapControlsOnMobile();
+          bindMarkersForViewportMode();
+        }
+
+        function applyViewportGate(){
+          isMobile = !!(MS_MOBILE_MEDIA ? MS_MOBILE_MEDIA.matches : (window.innerWidth <= 600));
+          try{ window.isMobile = isMobile; }catch(e){}
+          removeLegacyHeaderIfPresent();
+          if(isMobile === true){
+            initMobile();
+            teardownDesktop();
+          } else {
+            initDesktop();
+            teardownMobile();
+          }
+          safeInvalidateMap();
+        }
+
+        applyViewportGate();
         if(MS_MOBILE_MEDIA){
           if(typeof MS_MOBILE_MEDIA.addEventListener === 'function'){
-            MS_MOBILE_MEDIA.addEventListener('change', applyResponsiveUi);
+            MS_MOBILE_MEDIA.addEventListener('change', applyViewportGate);
           } else if(typeof MS_MOBILE_MEDIA.addListener === 'function'){
-            MS_MOBILE_MEDIA.addListener(applyResponsiveUi);
+            MS_MOBILE_MEDIA.addListener(applyViewportGate);
           }
         }
-        window.addEventListener('resize', applyResponsiveUi, { passive: true });
+        window.addEventListener('resize', applyViewportGate, { passive: true });
+        window.addEventListener('orientationchange', function(){
+          applyViewportGate();
+          safeInvalidateMap();
+        }, { passive: true });
       })();
 
       // initial pass
@@ -990,6 +1131,7 @@
           if(MS.map && MS.map.options){ MS.map.options.closePopupOnClick = false; }
         }catch(e){}
         initMarkers();
+        bindMarkersForViewportMode();
         removeNativeMapControlsOnMobile();
         addLocateMapControl();
         window.addEventListener('resize', function(){
@@ -998,6 +1140,15 @@
         }, { passive: true });
         if(MS.map && typeof MS.map.on === 'function'){
           MS.map.on('popupopen', function(e){
+            if(isMobile){
+              try{
+                if(MS.map && typeof MS.map.closePopup === 'function'){ MS.map.closePopup(); }
+                if(e && e.popup && e.popup._source){ openMarkerDetailsModalFromMarker(e.popup._source); }
+              }catch(err){}
+              MS.popupVisible = false;
+              syncMobileControlVisibility();
+              return;
+            }
             MS.popupVisible = true; syncMobileControlVisibility();
             try{
               if(e && e.popup && e.popup.options){

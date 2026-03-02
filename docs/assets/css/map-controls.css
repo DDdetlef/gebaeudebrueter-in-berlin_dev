@@ -58,7 +58,7 @@
       max-height: 80vh;
       overflow: auto;
       box-sizing: border-box;
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: stretch;
       gap: var(--ms-gap);
@@ -430,7 +430,7 @@ body.ms-mobile-redesign .ms-control {
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s ease;
-  z-index: 10040;
+  z-index: 10052;
 }
 .ms-side-backdrop.is-open {
   opacity: 1;
@@ -444,12 +444,12 @@ body.ms-mobile-redesign .ms-control {
   bottom: 0;
   width: var(--ms-nav-width);
   max-width: 420px;
-  background: #fff;
+  background: hsl(80, 43%, 85%);
   box-shadow: 8px 0 22px rgba(0,0,0,.22);
   transform: translateX(-100%);
   visibility: hidden;
   transition: transform .25s ease, visibility .25s ease;
-  z-index: 10045;
+  z-index: 10055;
   display: flex;
   flex-direction: column;
   padding-top: max(8px, env(safe-area-inset-top));
@@ -463,7 +463,8 @@ body.ms-mobile-redesign .ms-control {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border-bottom: 1px solid #eceff1;
+  border-bottom: 1px solid rgba(0,0,0,0.14);
+  color: hsl(0, 0%, 20%);
 }
 .ms-side-nav {
   display: flex;
@@ -473,22 +474,28 @@ body.ms-mobile-redesign .ms-control {
 }
 .ms-side-item {
   border: 0;
-  background: #fff;
-  color: #1f2937;
+  background: transparent;
+  color: hsl(0, 0%, 20%);
   text-decoration: none;
   font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
   min-height: 44px;
   border-radius: 10px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   text-align: left;
+  transition: background-color .14s ease;
 }
 .ms-side-item:hover,
 .ms-side-item:active {
-  background: #f4f7fb;
+  background: hsl(80, 43%, 75%);
+}
+.ms-side-item:active {
+  filter: brightness(0.95);
 }
 .ms-side-icon {
   width: 20px;
@@ -500,6 +507,15 @@ body.ms-mobile-redesign .ms-control {
   height: 20px;
   display: block;
   fill: currentColor;
+}
+.ms-side-sub {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.ms-side-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(0,0,0,0.18);
 }
 
 .ms-fab-filter {
@@ -585,8 +601,26 @@ body.ms-mobile-redesign .ms-control {
 }
 #ms-info-modal,
 #ms-submit-modal,
-#ms-placeholder-modal {
+#ms-placeholder-modal,
+#ms-marker-modal {
   z-index: 10070 !important;
+}
+
+.ms-marker-modal-content {
+  width: min(100vw, 760px);
+  max-width: 100vw;
+  max-height: calc(100vh - 8px);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.ms-marker-modal-scroll {
+  max-height: calc(100vh - 110px);
+  overflow: auto;
+}
+
+.ms-marker-modal-scroll .gb-report-link {
+  margin-top: 8px;
 }
 
 body.ms-side-open {
@@ -608,6 +642,18 @@ body.ms-side-open {
   #ms-fab-stack { display: flex; }
   .ms-fab-filter,
   .ms-fab-locate { display: inline-flex; }
+
+  .ms-marker-modal-content {
+    width: 100vw;
+    height: min(100vh, calc(100 * var(--ms-vh, 1vh)));
+    max-height: min(100vh, calc(100 * var(--ms-vh, 1vh)));
+    border-radius: 0;
+    padding: 12px;
+  }
+
+  .ms-marker-modal-scroll {
+    max-height: calc(100% - 42px);
+  }
 
   #ms-control {
     display: none !important;
