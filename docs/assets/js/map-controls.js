@@ -375,7 +375,6 @@
         var submitClose = document.getElementById('ms-submit-close');
         var submitCancel = document.getElementById('ms-submit-cancel');
         var sheet = document.getElementById('ms-bottom-sheet');
-        function openSubmit(ev){ if(ev){ ev.preventDefault(); } if(sheet){ sheet.classList.remove('open'); } if(submitModal){ submitModal.classList.remove('ms-hidden'); } syncMobileControlVisibility(); }
         function openSubmit(ev){ if(ev){ ev.preventDefault(); } if(sheet){ sheet.classList.remove('open'); } if(submitModal){ submitModal.classList.remove('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         function closeSubmit(){ if(submitModal){ submitModal.classList.add('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         if(submitBtn){ submitBtn.addEventListener('click', openSubmit); }
@@ -786,6 +785,7 @@
               '<nav class="ms-side-nav" aria-label="Hauptnavigation">',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg></span><span>Filter</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teile Karte</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="info"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11 10h2v7h-2zm0-4h2v2h-2z"></path><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path></svg></span><span>Info &amp; Hilfe</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg></span><span>Sende Feedback</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
                 '<div class="ms-side-divider" role="separator" aria-hidden="true"></div>',
@@ -915,13 +915,37 @@
 
         function syncFabStackVisibility(){
           if(!mobileRefs || !mobileRefs.fabStack || !mobileRefs.bottomSheet){ return; }
-          var hidden = mobileRefs.bottomSheet.classList.contains('open');
-          mobileRefs.fabStack.classList.toggle('is-hidden', hidden);
-          mobileRefs.fabStack.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+          mobileRefs.fabStack.classList.remove('is-hidden');
+          mobileRefs.fabStack.setAttribute('aria-hidden', 'false');
+        }
+
+        function openInfoModalFromMobile(){
+          var modal = document.getElementById('ms-info-modal');
+          if(!modal){ return; }
+          if(mobileRefs && mobileRefs.bottomSheet){
+            mobileRefs.bottomSheet.classList.remove('open');
+            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+          }
+          modal.classList.remove('ms-hidden');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+        }
+
+        function openSubmitModalFromMobile(){
+          var modal = document.getElementById('ms-submit-modal');
+          if(!modal){ return; }
+          if(mobileRefs && mobileRefs.bottomSheet){
+            mobileRefs.bottomSheet.classList.remove('open');
+            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+          }
+          modal.classList.remove('ms-hidden');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
         }
 
         function openBottomSheet(){
           if(!mobileRefs || !mobileRefs.bottomSheet){ return; }
+          if(mobileRefs.sideSheet && mobileRefs.sideSheet.classList.contains('is-open')){ closeSideSheet(false); }
           mobileRefs.bottomSheet.classList.add('open');
           mobileRefs.bottomSheet.setAttribute('aria-hidden', 'false');
           syncFabStackVisibility();
@@ -945,6 +969,10 @@
 
         function openSideSheet(opener){
           if(!mobileRefs){ return; }
+          if(mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){
+            mobileRefs.bottomSheet.classList.remove('open');
+            mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+          }
           mobileRefs.__lastOpener = opener || mobileRefs.navToggle;
           mobileRefs.sideBackdrop.removeAttribute('hidden');
           mobileRefs.sideSheet.classList.add('is-open');
@@ -989,9 +1017,7 @@
 
           if(mobileRefs.submitHeaderBtn){
             addDirectPressListener(mobileRefs.submitHeaderBtn, function(){
-              var submitLink = document.getElementById('ms-submit-continue');
-              var url = submitLink ? submitLink.getAttribute('href') : null;
-              if(url){ window.open(url, '_blank'); }
+              openSubmitModalFromMobile();
             });
           }
 
@@ -1048,6 +1074,11 @@
             if(action === 'share'){
               closeSideSheet(false);
               shareCurrentMap();
+              return;
+            }
+            if(action === 'info'){
+              closeSideSheet(false);
+              openInfoModalFromMobile();
               return;
             }
             if(action === 'feedback'){
