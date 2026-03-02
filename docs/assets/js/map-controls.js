@@ -552,6 +552,300 @@
         document.addEventListener('click', closeIfMapTap, {passive:true});
         document.addEventListener('touchstart', closeIfMapTap, {passive:true});
       })();
+
+      // Sticky header + side-sheet + FAB enhancements (mobile-first)
+      (function initMobileRedesign(){
+        function ensureMobileRedesignDom(){
+          if(document.getElementById('ms-app-header')){ return; }
+          if(!document.body){ return; }
+          var mount = document.createElement('div');
+          mount.innerHTML = [
+            '<header id="ms-app-header" data-stand-fallback="Unbekannt" role="banner">',
+              '<button id="ms-nav-toggle" class="ms-icon-btn" type="button" aria-label="Menü öffnen" aria-controls="ms-side-sheet" aria-expanded="false">☰</button>',
+              '<div class="ms-app-header-title">',
+                '<div class="ms-app-title">Gebäudebrüter in Berlin</div>',
+                '<div id="ms-app-stand" class="ms-app-stand">Stand: Unbekannt</div>',
+              '</div>',
+              '<button id="ms-header-submit" class="ms-icon-btn ms-icon-btn-accent" type="button" aria-label="Fundort melden">＋</button>',
+            '</header>',
+            '<div id="ms-side-backdrop" class="ms-side-backdrop" hidden></div>',
+            '<aside id="ms-side-sheet" class="ms-side-sheet" aria-hidden="true" aria-label="Navigation" tabindex="-1">',
+              '<div class="ms-side-head">',
+                '<strong>Menü</strong>',
+                '<button id="ms-side-close" class="ms-icon-btn" type="button" aria-label="Menü schließen">✕</button>',
+              '</div>',
+              '<nav class="ms-side-nav" aria-label="Hauptnavigation">',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon">⚲</span><span>Filter</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="info"><span class="ms-side-icon">ⓘ</span><span>Mehr Infos</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon">✉</span><span>Feedback</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon">⤴</span><span>Teilen</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="terms"><span class="ms-side-icon">§</span><span>Nutzungsbedingungen</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="privacy"><span class="ms-side-icon">🔒</span><span>Datenschutz</span></button>',
+              '</nav>',
+            '</aside>',
+            '<button id="fab-filter" class="ms-fab-filter" type="button" aria-label="Filter öffnen">',
+              '<span aria-hidden="true">⚲</span>',
+              '<span class="ms-fab-badge" aria-hidden="true"></span>',
+            '</button>',
+            '<div id="ms-placeholder-modal" class="ms-modal ms-hidden" aria-hidden="true">',
+              '<div class="ms-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-placeholder-title">',
+                '<button id="ms-placeholder-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
+                '<div id="ms-placeholder-title" class="ms-modal-title">Hinweis</div>',
+                '<div id="ms-placeholder-text" class="ms-modal-body">Dieser Bereich ist in Vorbereitung.</div>',
+              '</div>',
+            '</div>'
+          ].join('');
+          while(mount.firstChild){
+            document.body.appendChild(mount.firstChild);
+          }
+        }
+
+        ensureMobileRedesignDom();
+        if(document.body){ document.body.classList.add('ms-mobile-redesign'); }
+
+        var header = document.getElementById('ms-app-header');
+        var standNode = document.getElementById('ms-app-stand');
+        var navToggle = document.getElementById('ms-nav-toggle');
+        var sideSheet = document.getElementById('ms-side-sheet');
+        var sideBackdrop = document.getElementById('ms-side-backdrop');
+        var sideClose = document.getElementById('ms-side-close');
+        var submitHeaderBtn = document.getElementById('ms-header-submit');
+        var filterFab = document.getElementById('fab-filter');
+        var placeholderModal = document.getElementById('ms-placeholder-modal');
+        var placeholderText = document.getElementById('ms-placeholder-text');
+        var placeholderClose = document.getElementById('ms-placeholder-close');
+        if(!header || !standNode || !navToggle || !sideSheet || !sideBackdrop || !filterFab){ return; }
+
+        var lastOpener = null;
+
+        function extractStandText(){
+          var fallback = header.getAttribute('data-stand-fallback') || 'Unbekannt';
+          var fromTitleSub = document.querySelector('.ms-title-sub');
+          if(fromTitleSub && fromTitleSub.textContent){
+            var subText = fromTitleSub.textContent.trim();
+            if(subText){ return /stand\s*:/i.test(subText) ? subText.replace(/\s+/g, ' ') : ('Stand: ' + subText); }
+          }
+          var selectors = ['.gb-marker-counter', 'body'];
+          for(var i=0;i<selectors.length;i++){
+            var node = document.querySelector(selectors[i]);
+            var text = node && node.textContent ? node.textContent : '';
+            if(!text){ continue; }
+            var m = text.match(/(?:Stand|erstellt am)\s*:??\s*([0-9]{1,2}\.[0-9]{2}\.[0-9]{4}|[0-9]{1,2}\.[0-9]{4}|[0-9]{4}-[0-9]{2}-[0-9]{2})/i);
+            if(m && m[1]){ return 'Stand: ' + m[1]; }
+          }
+          return 'Stand: ' + fallback;
+        }
+
+        function openBottomSheet(){
+          var sheet = document.getElementById('ms-bottom-sheet');
+          if(!sheet){ return; }
+          sheet.classList.add('open');
+          sheet.setAttribute('aria-hidden', 'false');
+          syncMobileControlVisibility(true);
+        }
+
+        function openInfoModal(){
+          var infoModal = document.getElementById('ms-info-modal');
+          if(!infoModal){ return; }
+          infoModal.classList.remove('ms-hidden');
+          syncMobileControlVisibility();
+        }
+
+        function openPlaceholder(text){
+          if(!placeholderModal || !placeholderText){ return; }
+          placeholderText.textContent = text || 'Dieser Bereich ist in Vorbereitung.';
+          placeholderModal.classList.remove('ms-hidden');
+          placeholderModal.setAttribute('aria-hidden', 'false');
+          if(placeholderClose){ placeholderClose.focus(); }
+        }
+
+        function closePlaceholder(){
+          if(!placeholderModal){ return; }
+          placeholderModal.classList.add('ms-hidden');
+          placeholderModal.setAttribute('aria-hidden', 'true');
+        }
+
+        function showShareToast(message){
+          showMobileLocationToast(message || 'Link wurde kopiert.');
+        }
+
+        function shareApp(){
+          var shareData = {
+            title: document.title || 'Karte Gebäudebrüter in Berlin',
+            text: 'Karte Gebäudebrüter in Berlin',
+            url: window.location.href
+          };
+          if(navigator.share){
+            navigator.share(shareData).catch(function(){});
+            return;
+          }
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(window.location.href).then(function(){
+              showShareToast('Link in Zwischenablage kopiert.');
+            }).catch(function(){
+              showShareToast('Teilen nicht verfügbar.');
+            });
+            return;
+          }
+          showShareToast('Teilen wird von diesem Browser nicht unterstützt.');
+        }
+
+        function getFocusableInSideSheet(){
+          return Array.prototype.slice.call(sideSheet.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')).filter(function(el){
+            return !el.disabled && el.getAttribute('aria-hidden') !== 'true';
+          });
+        }
+
+        function closeSideSheet(returnFocus){
+          sideSheet.classList.remove('is-open');
+          sideSheet.setAttribute('aria-hidden', 'true');
+          sideBackdrop.classList.remove('is-open');
+          sideBackdrop.setAttribute('hidden', 'hidden');
+          navToggle.setAttribute('aria-expanded', 'false');
+          document.body.classList.remove('ms-side-open');
+          if(returnFocus && lastOpener && typeof lastOpener.focus === 'function'){
+            lastOpener.focus();
+          }
+        }
+
+        function openSideSheet(opener){
+          lastOpener = opener || navToggle;
+          sideBackdrop.removeAttribute('hidden');
+          sideSheet.classList.add('is-open');
+          sideSheet.setAttribute('aria-hidden', 'false');
+          sideBackdrop.classList.add('is-open');
+          navToggle.setAttribute('aria-expanded', 'true');
+          document.body.classList.add('ms-side-open');
+          var focusables = getFocusableInSideSheet();
+          if(focusables.length){ focusables[0].focus(); }
+          else { sideSheet.focus(); }
+        }
+
+        function toggleSideSheet(){
+          if(sideSheet.classList.contains('is-open')){ closeSideSheet(true); }
+          else { openSideSheet(navToggle); }
+        }
+
+        function bindPress(el, handler, useNonPassiveTouch){
+          if(!el || typeof handler !== 'function'){ return; }
+          var lastPointerStamp = 0;
+          function wrapped(ev){
+            if(ev && ev.type !== 'click'){
+              lastPointerStamp = Date.now();
+            } else if(Date.now() - lastPointerStamp < 420){
+              return;
+            }
+            if(ev && ev.preventDefault){ ev.preventDefault(); }
+            handler(ev);
+          }
+          el.addEventListener('click', wrapped);
+          el.addEventListener('pointerup', wrapped);
+          el.addEventListener('touchstart', wrapped, { passive: useNonPassiveTouch ? false : true });
+        }
+
+        standNode.textContent = extractStandText();
+
+        bindPress(navToggle, toggleSideSheet, true);
+        bindPress(sideClose, function(){ closeSideSheet(true); }, true);
+        bindPress(sideBackdrop, function(){ closeSideSheet(true); }, true);
+        bindPress(filterFab, function(){ openBottomSheet(); }, true);
+
+        if(submitHeaderBtn){
+          bindPress(submitHeaderBtn, function(){
+            var submitLink = document.getElementById('ms-submit-continue');
+            var url = submitLink ? submitLink.getAttribute('href') : null;
+            if(url){ window.open(url, '_blank'); }
+          }, true);
+        }
+
+        sideSheet.addEventListener('keydown', function(ev){
+          if(ev.key === 'Escape'){
+            ev.preventDefault();
+            closeSideSheet(true);
+            return;
+          }
+          if(ev.key !== 'Tab'){ return; }
+          var focusables = getFocusableInSideSheet();
+          if(!focusables.length){
+            ev.preventDefault();
+            return;
+          }
+          var first = focusables[0];
+          var last = focusables[focusables.length - 1];
+          if(ev.shiftKey && document.activeElement === first){
+            ev.preventDefault();
+            last.focus();
+          } else if(!ev.shiftKey && document.activeElement === last){
+            ev.preventDefault();
+            first.focus();
+          }
+        });
+
+        document.addEventListener('keydown', function(ev){
+          if(ev.key === 'Escape' && sideSheet.classList.contains('is-open')){
+            closeSideSheet(true);
+          }
+          if(ev.key === 'Escape' && placeholderModal && !placeholderModal.classList.contains('ms-hidden')){
+            closePlaceholder();
+          }
+        });
+
+        if(placeholderClose){
+          placeholderClose.addEventListener('click', function(){ closePlaceholder(); });
+        }
+        if(placeholderModal){
+          placeholderModal.addEventListener('click', function(ev){ if(ev.target === placeholderModal){ closePlaceholder(); } });
+        }
+
+        sideSheet.addEventListener('click', function(ev){
+          var item = ev.target && ev.target.closest ? ev.target.closest('[data-ms-nav-action]') : null;
+          if(!item){ return; }
+          var action = item.getAttribute('data-ms-nav-action');
+          if(action === 'feedback'){
+            closeSideSheet(false);
+            var feedbackControl = document.getElementById('gb-feedback-control');
+            if(feedbackControl && typeof feedbackControl.click === 'function'){ feedbackControl.click(); }
+            else { openPlaceholder('Feedback-Bereich konnte nicht geöffnet werden.'); }
+            return;
+          }
+          ev.preventDefault();
+          if(action === 'filter'){
+            closeSideSheet(false);
+            openBottomSheet();
+          } else if(action === 'info'){
+            closeSideSheet(false);
+            openInfoModal();
+          } else if(action === 'share'){
+            closeSideSheet(false);
+            shareApp();
+          } else if(action === 'terms'){
+            closeSideSheet(false);
+            openPlaceholder('Nutzungsbedingungen werden in Kürze bereitgestellt.');
+          } else if(action === 'privacy'){
+            closeSideSheet(false);
+            openPlaceholder('Datenschutzerklärung wird in Kürze bereitgestellt.');
+          }
+        });
+
+        function updateFabActiveState(){
+          var speciesBoxes = document.querySelectorAll('.ms-filter-species');
+          var statusBoxes = document.querySelectorAll('.ms-filter-status');
+          if(!speciesBoxes.length || !statusBoxes.length){ return; }
+          var speciesChecked = Array.prototype.filter.call(speciesBoxes, function(el){ return el.checked; }).length;
+          var statusChecked = Array.prototype.filter.call(statusBoxes, function(el){ return el.checked; }).length;
+          var allSelected = speciesChecked === speciesBoxes.length && statusChecked === statusBoxes.length;
+          filterFab.classList.toggle('is-active', !allSelected);
+        }
+
+        document.addEventListener('change', function(ev){
+          if(!ev || !ev.target || !ev.target.classList){ return; }
+          if(ev.target.classList.contains('ms-filter-species') || ev.target.classList.contains('ms-filter-status') || /^ms-(species|status)-all/.test(ev.target.id || '')){
+            updateFabActiveState();
+          }
+        });
+        setTimeout(updateFabActiveState, 320);
+      })();
+
       // initial pass
       resolveMapAndCluster(function(map, cluster){
         MS.map = map;
