@@ -7,6 +7,8 @@
       var FEEDBACK_MAILTO = 'mailto:detlefdev@gmail.com?subject=Feedback%20zur%20Karte';
       var CONTACT_MAILTO = 'mailto:detlefdev@gmail.com?subject=Kontakt%20zur%20Karte';
       var NABU_LOGO_LINK = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/index.html';
+      var LEGAL_COMBINED_URL = 'https://berlin.nabu.de/impressum/02133.html';
+      var SUBMIT_FORM_URL = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/projekte/gebaeudebrueter/12400.html';
       // Cluster-aware filtering support (always AND across groups)
       var MS = { map:null, cluster:null, markers:[], ready:false, userMarker:null, userAccuracyCircle:null, locationBound:false, locationToastTimer:null, locateControl:null, popupVisible:false };
       var MS_MOBILE_MEDIA = (window.matchMedia ? window.matchMedia('(max-width: 600px)') : null);
@@ -34,6 +36,93 @@
       function isModalOpenById(id){
         var modal = document.getElementById(id);
         return !!(modal && !modal.classList.contains('ms-hidden'));
+      }
+      function mergeRelTokens(currentRel, requiredTokens){
+        var merged = Object.create(null);
+        String(currentRel || '').split(/\s+/).forEach(function(token){
+          var normalized = String(token || '').trim().toLowerCase();
+          if(normalized){ merged[normalized] = true; }
+        });
+        (requiredTokens || []).forEach(function(token){
+          var normalized = String(token || '').trim().toLowerCase();
+          if(normalized){ merged[normalized] = true; }
+        });
+        return Object.keys(merged).join(' ');
+      }
+      function hardenAnchorNewTab(anchor){
+        if(!anchor || !anchor.setAttribute){ return; }
+        try{ anchor.setAttribute('target', '_blank'); }catch(e){}
+        var relValue = '';
+        try{ relValue = anchor.getAttribute('rel') || ''; }catch(e){ relValue = ''; }
+        try{ anchor.setAttribute('rel', mergeRelTokens(relValue, ['noopener', 'noreferrer'])); }catch(e){}
+      }
+      function openUrlInNewTabSecure(url){
+        var href = String(url || '').trim();
+        if(!href){ return false; }
+        try{
+          var tempLink = document.createElement('a');
+          tempLink.href = href;
+          hardenAnchorNewTab(tempLink);
+          tempLink.style.position = 'absolute';
+          tempLink.style.left = '-9999px';
+          if(document.body){
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            if(tempLink.parentNode){ tempLink.parentNode.removeChild(tempLink); }
+            return true;
+          }
+        }catch(e){}
+        try{ return !!window.open(href, '_blank', 'noopener,noreferrer'); }catch(err){}
+        return false;
+      }
+      function ensureSubmitCtaSecurity(){
+        var submitCta = document.getElementById('ms-submit-continue');
+        if(!submitCta){ return null; }
+        hardenAnchorNewTab(submitCta);
+        return submitCta;
+      }
+      function getSubmitFormUrl(){
+        var submitCta = document.getElementById('ms-submit-continue');
+        var href = '';
+        try{ href = submitCta ? (submitCta.getAttribute('href') || submitCta.href || '') : ''; }catch(e){ href = ''; }
+        return href || SUBMIT_FORM_URL;
+      }
+      function openSubmitModalOrFallback(){
+        var submitModal = document.getElementById('ms-submit-modal');
+        var submitCta = ensureSubmitCtaSecurity();
+        if(submitModal){
+          submitModal.classList.remove('ms-hidden');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(submitCta){ setTimeout(function(){ try{ submitCta.focus(); }catch(e){} }, 0); }
+          return true;
+        }
+        return openUrlInNewTabSecure(getSubmitFormUrl());
+      }
+      function closeAnyOpenMarkerOverlay(){
+        try{ if(MS.map && typeof MS.map.closePopup === 'function'){ MS.map.closePopup(); } }catch(e){}
+        try{ closeMarkerDetailsModal(); }catch(err){}
+        MS.popupVisible = false;
+        syncMobileControlVisibility(true);
+      }
+      function isDatabaseLinkHref(href){
+        var rawHref = String(href || '').trim();
+        if(!rawHref){ return false; }
+        if(/gebaeudebrueter-in-berlin\.de/i.test(rawHref)){ return true; }
+        try{
+          var parsed = new URL(rawHref, window.location.href);
+          return /(^|\.)gebaeudebrueter-in-berlin\.de$/i.test(parsed.hostname || '');
+        }catch(e){ return false; }
+      }
+      function hardenDatabaseLinksInScope(scope){
+        if(!scope || !scope.querySelectorAll){ return; }
+        var links = scope.querySelectorAll('a[href]');
+        if(!links || !links.length){ return; }
+        links.forEach(function(link){
+          var href = '';
+          try{ href = link.getAttribute('href') || link.href || ''; }catch(e){ href = ''; }
+          if(isDatabaseLinkHref(href)){ hardenAnchorNewTab(link); }
+        });
       }
       function hasVisibleMapPopup(){
         if(MS && typeof MS.popupVisible === 'boolean'){ return MS.popupVisible; }
@@ -144,6 +233,7 @@
         var content = (typeof popup.getContent === 'function') ? popup.getContent() : null;
         if(content && content.nodeType === 1){ body.innerHTML = content.outerHTML; }
         else { body.innerHTML = String(content || 'Keine Detaildaten verfügbar.'); }
+        hardenDatabaseLinksInScope(body);
         overlay.classList.remove('ms-hidden');
         overlay.setAttribute('aria-hidden', 'false');
       }
@@ -379,7 +469,12 @@
         var submitClose = document.getElementById('ms-submit-close');
         var submitCancel = document.getElementById('ms-submit-cancel');
         var sheet = document.getElementById('ms-bottom-sheet');
-        function openSubmit(ev){ if(ev){ ev.preventDefault(); } if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); } if(submitModal){ submitModal.classList.remove('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
+        ensureSubmitCtaSecurity();
+        function openSubmit(ev){
+          if(ev){ ev.preventDefault(); }
+          if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+          openSubmitModalOrFallback();
+        }
         function closeSubmit(){ if(submitModal){ submitModal.classList.add('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         if(submitBtn){ submitBtn.addEventListener('click', openSubmit); }
         var submitSheetBtn = document.getElementById('ms-submit-btn-sheet');
@@ -801,9 +896,9 @@
                 '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg></span><span>Sende Feedback</span></button>',
                 '<div class="ms-side-divider" role="separator" aria-hidden="true"></div>',
                 '<div class="ms-side-section-label">Rechtliches</div>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-terms"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Nutzungsbedingungen (in Kürze bereitgestellt)</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-combined"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutzerklärung (in Kürze bereitgestellt)</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt (in Kürze bereitgestellt)</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-terms"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Nutzungsbedingungen</span></button>',
+                '<a class="ms-side-item" data-ms-nav-action="legal-combined" href="' + LEGAL_COMBINED_URL + '" target="_blank" rel="noopener noreferrer"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutz</span></a>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
               '</nav>',
               '<div class="ms-side-footer">',
                 '<div class="ms-side-logo-wrap">',
@@ -949,20 +1044,20 @@
         }
 
         function openSubmitModalFromMobile(){
-          var modal = document.getElementById('ms-submit-modal');
-          if(!modal){ return; }
+          closeAnyOpenMarkerOverlay();
           if(mobileRefs && mobileRefs.bottomSheet){
             closeBottomSheet();
           }
-          modal.classList.remove('ms-hidden');
-          syncHeaderLayeringOverModals();
-          syncMobileControlVisibility();
+          openSubmitModalOrFallback();
         }
 
         function closeBottomSheet(){
           if(!mobileRefs || !mobileRefs.bottomSheet){ return; }
           mobileRefs.bottomSheet.classList.remove('open');
+          mobileRefs.bottomSheet.classList.remove('ms-sheet-dragging');
           mobileRefs.bottomSheet.setAttribute('aria-hidden', 'true');
+          mobileRefs.bottomSheet.style.removeProperty('transition');
+          mobileRefs.bottomSheet.style.removeProperty('will-change');
           mobileRefs.bottomSheet.style.removeProperty('transform');
           syncFabStackVisibility();
         }
@@ -989,7 +1084,9 @@
           mobileRefs.sideSheet.setAttribute('aria-modal', 'false');
           mobileRefs.sideBackdrop.classList.remove('is-open');
           mobileRefs.sideBackdrop.setAttribute('hidden', 'hidden');
+          mobileRefs.navToggle.classList.remove('is-open');
           mobileRefs.navToggle.setAttribute('aria-expanded', 'false');
+          mobileRefs.navToggle.setAttribute('aria-label', 'Menü öffnen');
           document.body.classList.remove('ms-side-open');
           if(returnFocus && mobileRefs.__lastOpener && typeof mobileRefs.__lastOpener.focus === 'function'){
             mobileRefs.__lastOpener.focus();
@@ -998,6 +1095,7 @@
 
         function openSideSheet(opener){
           if(!mobileRefs){ return; }
+          closeAnyOpenMarkerOverlay();
           if(mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){
             closeBottomSheet();
           }
@@ -1007,7 +1105,9 @@
           mobileRefs.sideSheet.setAttribute('aria-hidden', 'false');
           mobileRefs.sideSheet.setAttribute('aria-modal', 'true');
           mobileRefs.sideBackdrop.classList.add('is-open');
+          mobileRefs.navToggle.classList.add('is-open');
           mobileRefs.navToggle.setAttribute('aria-expanded', 'true');
+          mobileRefs.navToggle.setAttribute('aria-label', 'Menü schließen');
           document.body.classList.add('ms-side-open');
           var focusables = Array.prototype.slice.call(mobileRefs.sideSheet.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')).filter(function(el){
             return !el.disabled && el.getAttribute('aria-hidden') !== 'true';
@@ -1044,12 +1144,31 @@
 
           addDirectPressListener(mobileRefs.navToggle, function(){
             if(mobileRefs.sideSheet.classList.contains('is-open')){ closeSideSheet(true); }
-            else { openSideSheet(mobileRefs.navToggle); }
+            else {
+              closeAnyOpenMarkerOverlay();
+              openSideSheet(mobileRefs.navToggle);
+            }
           });
           addDirectPressListener(mobileRefs.sideClose, function(){ closeSideSheet(true); });
           addDirectPressListener(mobileRefs.sideBackdrop, function(){ closeSideSheet(true); });
           addDirectPressListener(mobileRefs.filterFab, function(){ openBottomSheet(); });
           addDirectPressListener(mobileRefs.locateFab, function(){ requestUserLocation(); });
+
+          addCleanup(document, 'click', function(ev){
+            if(!mobileRefs || !isMobileView()){ return; }
+            var target = ev && ev.target;
+            var reportLink = target && target.closest ? target.closest('a.gb-report-link') : null;
+            if(!reportLink){ return; }
+            if(ev && ev.cancelable){ ev.preventDefault(); }
+            if(ev && typeof ev.stopImmediatePropagation === 'function'){ ev.stopImmediatePropagation(); }
+            if(ev && ev.stopPropagation){ ev.stopPropagation(); }
+            closeAnyOpenMarkerOverlay();
+            if(mobileRefs.sideSheet && mobileRefs.sideSheet.classList.contains('is-open')){ closeSideSheet(false); }
+            if(mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){ closeBottomSheet(); }
+            if(!openSubmitModalOrFallback()){
+              openUrlInNewTabSecure(getSubmitFormUrl());
+            }
+          }, true);
 
           if(mobileRefs.submitHeaderBtn){
             addDirectPressListener(mobileRefs.submitHeaderBtn, function(){
@@ -1080,79 +1199,124 @@
           })();
 
           (function setupBottomSheetSwipe(){
+            var sheet = mobileRefs.bottomSheet;
+            if(!sheet){ return; }
             var startY = 0;
             var startTime = 0;
             var dragging = false;
-            var touchTracking = false;
-            var touchStartY = 0;
-            var touchBlocked = false;
-            var sheet = mobileRefs.bottomSheet;
-            if(!sheet){ return; }
+            var activePointerId = null;
+            var sheetHeight = 0;
+            var rafId = 0;
+            var queuedOffset = 0;
+            var settleTimer = null;
+
             function canStart(target){
               if(!target || !target.closest){ return false; }
               return !!target.closest('.ms-sheet-handle, .ms-sheet-header');
             }
+            function clearSettleTimer(){
+              if(!settleTimer){ return; }
+              clearTimeout(settleTimer);
+              settleTimer = null;
+            }
+            function queueTranslate(offset){
+              queuedOffset = Math.max(0, offset || 0);
+              if(rafId){ return; }
+              rafId = requestAnimationFrame(function(){
+                rafId = 0;
+                sheet.style.transform = 'translate3d(0,' + queuedOffset.toFixed(1) + 'px,0)';
+              });
+            }
+            function resetSheetTransform(){
+              sheet.classList.remove('ms-sheet-dragging');
+              sheet.style.removeProperty('will-change');
+              sheet.style.removeProperty('transition');
+              sheet.style.removeProperty('transform');
+            }
+            function beginDrag(clientY, pointerId){
+              dragging = true;
+              activePointerId = pointerId;
+              startY = clientY;
+              startTime = Date.now();
+              sheetHeight = Math.max(1, Math.round(sheet.getBoundingClientRect().height || 0));
+              clearSettleTimer();
+              if(rafId){ cancelAnimationFrame(rafId); rafId = 0; }
+              sheet.classList.add('ms-sheet-dragging');
+              sheet.style.willChange = 'transform';
+              sheet.style.transition = 'none';
+              sheet.style.transform = 'translate3d(0,0,0)';
+            }
+            function settleAfter(durationMs){
+              clearSettleTimer();
+              settleTimer = setTimeout(function(){
+                settleTimer = null;
+                resetSheetTransform();
+              }, durationMs);
+            }
+            function snapBack(){
+              sheet.classList.remove('ms-sheet-dragging');
+              sheet.style.removeProperty('will-change');
+              sheet.style.transition = 'transform 140ms cubic-bezier(0.22, 1, 0.36, 1)';
+              sheet.style.transform = 'translate3d(0,0,0)';
+              settleAfter(150);
+            }
+            function closeWithGesture(){
+              sheet.classList.remove('ms-sheet-dragging');
+              sheet.style.removeProperty('will-change');
+              var closeDistance = Math.max(sheetHeight || 0, 180);
+              sheet.style.transition = 'transform 160ms cubic-bezier(0.22, 1, 0.36, 1)';
+              sheet.style.transform = 'translate3d(0,' + closeDistance + 'px,0)';
+              clearSettleTimer();
+              settleTimer = setTimeout(function(){
+                settleTimer = null;
+                sheet.style.removeProperty('transition');
+                closeBottomSheet();
+              }, 170);
+            }
+
             addCleanup(sheet, 'pointerdown', function(ev){
               if(!sheet.classList.contains('open')){ return; }
               if(ev.pointerType === 'mouse' && ev.button !== 0){ return; }
               if(!canStart(ev.target)){ return; }
-              dragging = true;
-              startY = ev.clientY;
-              startTime = Date.now();
-            }, { passive: true });
+              beginDrag(ev.clientY, ev.pointerId);
+              try{ if(typeof sheet.setPointerCapture === 'function'){ sheet.setPointerCapture(ev.pointerId); } }catch(e){}
+              if(ev.cancelable){ ev.preventDefault(); }
+            }, { passive: false });
+
             addCleanup(sheet, 'pointermove', function(ev){
               if(!dragging){ return; }
+              if(activePointerId !== null && ev.pointerId !== activePointerId){ return; }
               var dy = Math.max(0, ev.clientY - startY);
-              if(dy > 0){
-                sheet.style.transform = 'translateY(' + Math.min(dy, 240) + 'px)';
-              }
-            }, { passive: true });
+              queueTranslate(Math.min(dy, sheetHeight || dy));
+              if(ev.cancelable){ ev.preventDefault(); }
+            }, { passive: false });
+
             addCleanup(sheet, 'pointerup', function(ev){
               if(!dragging){ return; }
+              if(activePointerId !== null && ev.pointerId !== activePointerId){ return; }
               dragging = false;
+              try{ if(activePointerId !== null && typeof sheet.releasePointerCapture === 'function'){ sheet.releasePointerCapture(activePointerId); } }catch(e){}
+              activePointerId = null;
               var dy = Math.max(0, ev.clientY - startY);
               var dt = Math.max(1, Date.now() - startTime);
               var velocity = dy / dt;
-              if(dy >= 56 || (dy >= 40 && velocity > 0.55)){
-                closeBottomSheet();
-              } else {
-                sheet.style.removeProperty('transform');
-              }
-            }, { passive: true });
-            addCleanup(sheet, 'pointercancel', function(){
-              dragging = false;
-              sheet.style.removeProperty('transform');
-            }, { passive: true });
+              var closeThreshold = Math.max(48, Math.round((sheetHeight || 0) / 3));
+              if(dy >= closeThreshold || velocity > 0.7){ closeWithGesture(); }
+              else { snapBack(); }
+              if(ev.cancelable){ ev.preventDefault(); }
+            }, { passive: false });
 
-            // Local Android pull-to-refresh protection for sheet-only swipe-down.
-            addCleanup(sheet, 'touchstart', function(ev){
-              if(!sheet.classList.contains('open')){ return; }
-              if(!ev.touches || !ev.touches.length){ return; }
-              if(!canStart(ev.target)){ return; }
-              touchTracking = true;
-              touchBlocked = false;
-              touchStartY = ev.touches[0].clientY;
+            addCleanup(sheet, 'pointercancel', function(ev){
+              if(activePointerId !== null && ev.pointerId !== activePointerId){ return; }
+              dragging = false;
+              activePointerId = null;
+              snapBack();
             }, { passive: true });
 
             addCleanup(sheet, 'touchmove', function(ev){
-              if(!touchTracking || !ev.touches || !ev.touches.length){ return; }
-              var dy = ev.touches[0].clientY - touchStartY;
-              if(dy > 28){
-                touchBlocked = true;
-                // preventDefault only while dragging down in sheet header area.
-                ev.preventDefault();
-              }
+              if(!dragging){ return; }
+              if(ev.cancelable){ ev.preventDefault(); }
             }, { passive: false });
-
-            addCleanup(sheet, 'touchend', function(){
-              touchTracking = false;
-              touchBlocked = false;
-            }, { passive: true });
-
-            addCleanup(sheet, 'touchcancel', function(){
-              touchTracking = false;
-              touchBlocked = false;
-            }, { passive: true });
           })();
 
           addCleanup(mobileRefs.sideSheet, 'keydown', function(ev){
@@ -1230,12 +1394,11 @@
             }
             if(action === 'legal-terms'){
               closeSideSheet(false);
-              openPlaceholder('Nutzungsbedingungen werden in Kürze bereitgestellt.');
+              openPlaceholder('Nutzungsbedingungen werden derzeit vorbereitet.');
               return;
             }
             if(action === 'legal-combined'){
               closeSideSheet(false);
-              openPlaceholder('Impressum & Datenschutzerklärung werden in Kürze bereitgestellt.');
               return;
             }
           });
@@ -1359,6 +1522,16 @@
         }, { passive: true });
         if(MS.map && typeof MS.map.on === 'function'){
           MS.map.on('popupopen', function(e){
+            try{
+              if(e && e.popup){
+                var popupContentNode = (typeof e.popup.getContent === 'function') ? e.popup.getContent() : null;
+                if(popupContentNode && popupContentNode.nodeType === 1){ hardenDatabaseLinksInScope(popupContentNode); }
+                var popupNode = null;
+                if(typeof e.popup.getElement === 'function'){ popupNode = e.popup.getElement(); }
+                if(!popupNode && e.popup._container){ popupNode = e.popup._container; }
+                if(popupNode){ hardenDatabaseLinksInScope(popupNode); }
+              }
+            }catch(linkErr){}
             if(isMobile){
               try{
                 if(MS.map && typeof MS.map.closePopup === 'function'){ MS.map.closePopup(); }
@@ -1380,6 +1553,7 @@
                 else if(e.popup._container){ popupEl = e.popup._container; }
               }
               if(!popupEl){ popupEl = document.querySelector('.leaflet-popup'); }
+              if(popupEl){ hardenDatabaseLinksInScope(popupEl); }
               var viewportH = 0;
               try{
                 viewportH = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : (window.innerHeight || document.documentElement.clientHeight || 0);

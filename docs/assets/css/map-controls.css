@@ -100,8 +100,9 @@
     .ms-modal-image { flex:1 1 30%; display:flex; align-items:flex-start; justify-content:flex-end; }
     .ms-modal-logo-lg { max-width:180px; max-height:120px; height:auto; width:auto; border-radius:6px; }
     /* Bottom-sheet for mobile filters */
-    .ms-bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; background: #fff; box-shadow: 0 -8px 24px rgba(0,0,0,0.18); border-top-left-radius: 12px; border-top-right-radius: 12px; transform: translateY(100%); transition: transform .28s ease; z-index: 10004; overflow: auto; }
+    .ms-bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; background: #fff; box-shadow: 0 -8px 24px rgba(0,0,0,0.18); border-top-left-radius: 12px; border-top-right-radius: 12px; transform: translateY(100%); transition: transform .2s cubic-bezier(0.22, 1, 0.36, 1); z-index: 10004; overflow: auto; }
     .ms-bottom-sheet.open { transform: translateY(0%); }
+    .ms-bottom-sheet.ms-sheet-dragging { transition: none !important; }
     .ms-sheet-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom:1px solid #eee; }
     .ms-sheet-handle { width:36px; height:4px; background:#ddd; border-radius:4px; margin:8px auto; }
     .ms-accordion-toggle { width:100%; text-align:left; padding:10px 14px; border:none; background:transparent; font-size:15px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
@@ -172,6 +173,21 @@
     .ms-submit-btn { font-size:13px; padding:6px 8px; border-radius:6px; border:1px solid #1976d2; background:#fff; cursor:pointer; color:#1976d2; }
     .ms-submit-btn:hover { background: #f5fbff; }
     .ms-submit-cta { display:inline-block; padding:6px 10px; border-radius:6px; border:1px solid #1976d2; background:#1976d2; color:#fff; text-decoration:none; }
+    .ms-submit-cta,
+    .ms-submit-cta:link,
+    .ms-submit-cta:visited,
+    .ms-submit-cta:hover,
+    .ms-submit-cta:focus,
+    .ms-submit-cta:active,
+    #ms-submit-continue,
+    #ms-submit-continue:link,
+    #ms-submit-continue:visited,
+    #ms-submit-continue:hover,
+    #ms-submit-continue:focus,
+    #ms-submit-continue:active {
+      color: #fff !important;
+      text-decoration: none;
+    }
     .ms-submit-btn-neutral { background:#fff; color:var(--ms-accent); border:1px solid rgba(0,0,0,0.06); }
     .ms-feedback-link { display:inline-flex; align-items:center; gap:6px; padding:6px; border-radius:6px; border:1px solid rgba(0,0,0,0.06); background:#fff; color:var(--ms-accent); }
     .ms-feedback-icon { display:inline-flex; width:14px; height:14px; line-height: 1; }
@@ -463,6 +479,7 @@ body.ms-mobile-redesign .ms-control {
   display: flex;
   flex-direction: column;
   padding-top: 8px;
+  overflow-y: auto;
 }
 .ms-side-sheet.is-open {
   transform: translateX(0);
@@ -479,8 +496,12 @@ body.ms-mobile-redesign .ms-control {
 .ms-side-nav {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 8px;
   gap: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .ms-side-item {
   border: 0;
@@ -509,10 +530,10 @@ body.ms-mobile-redesign .ms-control {
 }
 .ms-side-footer {
   margin-top: auto;
-  padding: 18px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px) + clamp(20px, 5vh, 52px));
 }
 .ms-side-logo-wrap {
-  margin-top: 14px;
+  margin-top: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -637,6 +658,8 @@ body.ms-mobile-redesign .ms-control {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ms-safe-bottom-extra));
   overscroll-behavior-y: contain;
   touch-action: pan-y;
+  will-change: transform;
+  contain: layout paint;
 }
 #ms-info-modal,
 #ms-submit-modal,
@@ -751,7 +774,9 @@ body.ms-side-open {
     color: #fff;
     border-bottom-color: rgba(255,255,255,0.22);
     background: transparent;
-    touch-action: pan-y;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   #ms-bottom-sheet .ms-sheet-title {
     font-size: 16px;
@@ -783,6 +808,8 @@ body.ms-side-open {
   }
   #ms-bottom-sheet .ms-sheet-handle {
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   #ms-bottom-sheet .ms-sheet-handle {
     background: rgba(255,255,255,0.6);
@@ -817,13 +844,38 @@ body.ms-side-open {
   color: var(--nabu-blue);
   border-color: rgba(0,0,0,.14);
 }
+#ms-nav-toggle {
+  transition: transform .18s ease, background-color .14s ease, border-color .14s ease;
+  transform-origin: center;
+  will-change: transform;
+}
+#ms-nav-toggle.is-open {
+  transform: rotate(-90deg);
+}
 #ms-nav-toggle:hover,
 #ms-side-close:hover {
   background: #f3f6fa;
   border-color: rgba(0,0,0,.18);
 }
 #ms-side-close {
-  border-radius: 10px;
+  border-radius: 999px;
+  background: var(--ms-sidebar-bg);
+  border-color: rgba(0,0,0,.12);
+  box-shadow: none;
+}
+#ms-side-close:hover {
+  background: hsl(80, 43%, 79%);
+  border-color: rgba(0,0,0,.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ms-nav-toggle {
+    transition: background-color .01ms linear, border-color .01ms linear;
+    will-change: auto;
+  }
+  #ms-nav-toggle.is-open {
+    transform: none;
+  }
 }
 
 @media (max-width: 360px) {
