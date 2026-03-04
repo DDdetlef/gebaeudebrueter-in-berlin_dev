@@ -1044,6 +1044,7 @@
         }
 
         function openSubmitModalFromMobile(){
+          closeAnyOpenMarkerOverlay();
           if(mobileRefs && mobileRefs.bottomSheet){
             closeBottomSheet();
           }
