@@ -173,6 +173,21 @@
     .ms-submit-btn { font-size:13px; padding:6px 8px; border-radius:6px; border:1px solid #1976d2; background:#fff; cursor:pointer; color:#1976d2; }
     .ms-submit-btn:hover { background: #f5fbff; }
     .ms-submit-cta { display:inline-block; padding:6px 10px; border-radius:6px; border:1px solid #1976d2; background:#1976d2; color:#fff; text-decoration:none; }
+    .ms-submit-cta,
+    .ms-submit-cta:link,
+    .ms-submit-cta:visited,
+    .ms-submit-cta:hover,
+    .ms-submit-cta:focus,
+    .ms-submit-cta:active,
+    #ms-submit-continue,
+    #ms-submit-continue:link,
+    #ms-submit-continue:visited,
+    #ms-submit-continue:hover,
+    #ms-submit-continue:focus,
+    #ms-submit-continue:active {
+      color: #fff !important;
+      text-decoration: none;
+    }
     .ms-submit-btn-neutral { background:#fff; color:var(--ms-accent); border:1px solid rgba(0,0,0,0.06); }
     .ms-feedback-link { display:inline-flex; align-items:center; gap:6px; padding:6px; border-radius:6px; border:1px solid rgba(0,0,0,0.06); background:#fff; color:var(--ms-accent); }
     .ms-feedback-icon { display:inline-flex; width:14px; height:14px; line-height: 1; }
