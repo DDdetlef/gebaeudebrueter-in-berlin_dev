@@ -1766,20 +1766,6 @@
           addDirectPressListener(mobileRefs.filterFab, function(){ openBottomSheet(); });
           addDirectPressListener(mobileRefs.locateFab, function(){ requestUserLocation(); });
 
-          addCleanup(document, 'click', function(ev){
-            if(!mobileRefs || !isMobileView()){ return; }
-            var target = ev && ev.target;
-            var reportLink = target && target.closest ? target.closest('a.gb-report-link') : null;
-            if(!reportLink){ return; }
-            if(ev && ev.cancelable){ ev.preventDefault(); }
-            if(ev && typeof ev.stopImmediatePropagation === 'function'){ ev.stopImmediatePropagation(); }
-            if(ev && ev.stopPropagation){ ev.stopPropagation(); }
-            closeMobileTransientOverlays({ keepSubmitModal: true, forceShowControl: true });
-            if(!openSubmitModalOrFallback()){
-              openUrlInNewTabSecure(getSubmitFormUrl());
-            }
-          }, true);
-
           if(mobileRefs.submitHeaderBtn){
             addDirectPressListener(mobileRefs.submitHeaderBtn, function(){
               openSubmitModalFromMobile();
