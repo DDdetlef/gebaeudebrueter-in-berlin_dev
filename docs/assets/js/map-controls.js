@@ -559,7 +559,7 @@
           return false;
         }
         var sameIdActive = normalized === BASEMAP_STATE.activeId && BASEMAP_STATE.activeLayer && MS.map.hasLayer(BASEMAP_STATE.activeLayer);
-        if(sameIdActive){
+        if(sameIdActive && !opts.forceRecreate){
           syncMapMaxZoomForBasemap(normalized);
           syncBasemapAttribution(normalized);
           if(opts.updateUrl){ updateBasemapUrlParam(normalized); }
@@ -605,10 +605,17 @@
           syncBasemapAttribution(BASEMAP_STATE.activeId);
           return;
         }
-        persistBasemapToStorage(BASEMAP_DEFAULT_ID);
-        syncMapMaxZoomForBasemap(BASEMAP_DEFAULT_ID);
-        syncBasemapAttribution(BASEMAP_DEFAULT_ID);
-        if(basemapFromUrl === BASEMAP_DEFAULT_ID){ updateBasemapUrlParam(BASEMAP_DEFAULT_ID); }
+        var defaultApplied = applyBasemapById(BASEMAP_DEFAULT_ID, {
+          updateUrl: basemapFromUrl === BASEMAP_DEFAULT_ID,
+          persist: true,
+          forceRecreate: true
+        });
+        if(!defaultApplied){
+          BASEMAP_STATE.activeId = BASEMAP_DEFAULT_ID;
+          syncMapMaxZoomForBasemap(BASEMAP_DEFAULT_ID);
+          syncBasemapAttribution(BASEMAP_DEFAULT_ID);
+          if(basemapFromUrl === BASEMAP_DEFAULT_ID){ updateBasemapUrlParam(BASEMAP_DEFAULT_ID); }
+        }
       }
       syncViewportCssVars();
       window.addEventListener('resize', syncViewportCssVars, { passive: true });
