@@ -12,6 +12,28 @@
       var NABU_LOGO_LINK = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/index.html';
       var LEGAL_COMBINED_URL = 'https://berlin.nabu.de/impressum/02133.html';
       var SUBMIT_FORM_URL = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/projekte/gebaeudebrueter/12400.html';
+      var BASEMAP_DEFAULT_ID = 'positron';
+      var BASEMAP_QUERY_KEY = 'basemap';
+      var BASEMAP_STORAGE_KEY = 'ms-basemap';
+      var TOPPLUSOPEN_TIMEOUT_MS = 15000;
+      var TOPPLUSOPEN_MAX_TILE_ERRORS = 8;
+      var TOPPLUSOPEN_MAX_ZOOM = 18;
+      var TOPPLUSOPEN_DATA_YEAR = String((new Date()).getFullYear());
+      var BKG_DATENQUELLEN_URL = 'https://www.bkg.bund.de/DE/Produkte-und-Services/Shop-und-Downloads/Karten-und-Geodaten/TopPlusOpen/topplus_open.html';
+      var POSITRON_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>, &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+      var TOPPLUSOPEN_ATTRIBUTION = 'Kartendarstellung: &copy; BKG (' + TOPPLUSOPEN_DATA_YEAR + ') – <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener noreferrer">DL-DE-BY 2.0</a> · <a href="' + BKG_DATENQUELLEN_URL + '" target="_blank" rel="noopener noreferrer">Datenquellen</a>';
+      var BASEMAP_STATE = {
+        activeId: BASEMAP_DEFAULT_ID,
+        activeLayer: null,
+        initialLayer: null,
+        mapDefaultMaxZoom: null,
+        monitorLayer: null,
+        monitorLoadHandler: null,
+        monitorErrorHandler: null,
+        timeoutId: null,
+        topplusHasSuccessfulLoad: false,
+        tileErrorCount: 0
+      };
       // Cluster-aware filtering support (always AND across groups)
       var MS = { map:null, cluster:null, markers:[], ready:false, userMarker:null, userAccuracyCircle:null, locationBound:false, locationToastTimer:null, locateControl:null, popupVisible:false };
       var MS_MOBILE_MEDIA = (window.matchMedia ? window.matchMedia('(max-width: ' + MOBILE_MAX_WIDTH + 'px)') : null);
@@ -145,7 +167,7 @@
         if(!ctrl){ return; }
         if(!isCompactViewport()){ ctrl.classList.remove('ms-overlay-hidden'); return; }
         if(forceShow === true){ ctrl.classList.remove('ms-overlay-hidden'); return; }
-        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || hasVisibleMapPopup();
+        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
         ctrl.classList.toggle('ms-overlay-hidden', shouldHide);
       }
       function hideModalById(id){
@@ -206,12 +228,200 @@
         if(!opts.keepMarkerOverlay){ closeAnyOpenMarkerOverlay(); }
         if(!opts.keepInfoModal){ hideModalById('ms-info-modal'); }
         if(!opts.keepSubmitModal){ hideModalById('ms-submit-modal'); }
+        if(!opts.keepBasemapModal){ hideModalById('ms-basemap-modal'); }
         if(!opts.keepPlaceholderModal){ hideModalById('ms-placeholder-modal'); }
         if(!opts.keepBottomSheet){ closeBottomSheetDom(); }
         if(!opts.keepSideSheet){ closeSideSheetDom(); }
         if(!opts.keepGbOverlay){ closeGbModalOverlay(); }
         syncHeaderLayeringOverModals();
         syncMobileControlVisibility(opts.forceShowControl === true);
+      }
+      function normalizeBasemapId(value){
+        var id = String(value || '').trim().toLowerCase();
+        return (id === 'positron' || id === 'topplusopen') ? id : '';
+      }
+      function readBasemapFromUrl(){
+        try{
+          var params = new URLSearchParams(window.location.search || '');
+          return normalizeBasemapId(params.get(BASEMAP_QUERY_KEY));
+        }catch(e){ return ''; }
+      }
+      function readBasemapFromStorage(){
+        try{ return normalizeBasemapId(window.localStorage.getItem(BASEMAP_STORAGE_KEY)); }catch(e){ return ''; }
+      }
+      function persistBasemapToStorage(id){
+        try{ window.localStorage.setItem(BASEMAP_STORAGE_KEY, id); }catch(e){}
+      }
+      function updateBasemapUrlParam(id){
+        var normalized = normalizeBasemapId(id);
+        if(!normalized){ return; }
+        try{
+          var url = new URL(window.location.href);
+          url.searchParams.set(BASEMAP_QUERY_KEY, normalized);
+          window.history.replaceState(window.history.state || {}, '', url.toString());
+        }catch(e){}
+      }
+      function detectCurrentBasemapLayer(){
+        if(!MS.map || !window.L || typeof MS.map.eachLayer !== 'function'){ return null; }
+        var found = null;
+        MS.map.eachLayer(function(layer){
+          if(found){ return; }
+          try{
+            if(layer instanceof L.TileLayer){ found = layer; }
+          }catch(e){}
+        });
+        return found;
+      }
+      function clearTopPlusOpenMonitor(){
+        if(BASEMAP_STATE.timeoutId){
+          clearTimeout(BASEMAP_STATE.timeoutId);
+          BASEMAP_STATE.timeoutId = null;
+        }
+        if(BASEMAP_STATE.monitorLayer){
+          try{
+            if(BASEMAP_STATE.monitorLoadHandler){ BASEMAP_STATE.monitorLayer.off('load', BASEMAP_STATE.monitorLoadHandler); }
+            if(BASEMAP_STATE.monitorErrorHandler){ BASEMAP_STATE.monitorLayer.off('tileerror', BASEMAP_STATE.monitorErrorHandler); }
+          }catch(e){}
+        }
+        BASEMAP_STATE.monitorLayer = null;
+        BASEMAP_STATE.monitorLoadHandler = null;
+        BASEMAP_STATE.monitorErrorHandler = null;
+        BASEMAP_STATE.topplusHasSuccessfulLoad = false;
+        BASEMAP_STATE.tileErrorCount = 0;
+      }
+      function showBasemapWarning(message){
+        if(typeof showMobileLocationToast === 'function'){
+          showMobileLocationToast(message);
+          return;
+        }
+        try{ console.warn(message); }catch(e){}
+      }
+      function createBasemapLayer(id){
+        if(!window.L || typeof L.tileLayer !== 'function'){ return null; }
+        if(id === 'topplusopen'){
+          return L.tileLayer('https://sgx.geodatenzentrum.de/wmts_topplus_open/tile/1.0.0/web/default/WEBMERCATOR/{z}/{y}/{x}.png', {
+            minZoom: 0,
+            maxZoom: TOPPLUSOPEN_MAX_ZOOM,
+            maxNativeZoom: TOPPLUSOPEN_MAX_ZOOM,
+            attribution: TOPPLUSOPEN_ATTRIBUTION,
+            detectRetina: false,
+            noWrap: true
+          });
+        }
+        return L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          subdomains: 'abcd',
+          minZoom: 0,
+          maxZoom: 20,
+          maxNativeZoom: 20,
+          attribution: POSITRON_ATTRIBUTION,
+          detectRetina: !isMobileView()
+        });
+      }
+      function syncMapMaxZoomForBasemap(id){
+        if(!MS.map || typeof MS.map.setMaxZoom !== 'function'){ return; }
+        if(BASEMAP_STATE.mapDefaultMaxZoom === null && typeof MS.map.getMaxZoom === 'function'){
+          BASEMAP_STATE.mapDefaultMaxZoom = MS.map.getMaxZoom();
+        }
+        if(id === 'topplusopen'){
+          try{ MS.map.setMaxZoom(TOPPLUSOPEN_MAX_ZOOM); }catch(e){}
+          try{
+            var currentZoom = (typeof MS.map.getZoom === 'function') ? MS.map.getZoom() : 0;
+            if(typeof currentZoom === 'number' && currentZoom > TOPPLUSOPEN_MAX_ZOOM && typeof MS.map.setZoom === 'function'){
+              MS.map.setZoom(TOPPLUSOPEN_MAX_ZOOM, { animate: false });
+            }
+          }catch(e){}
+          return;
+        }
+        if(typeof BASEMAP_STATE.mapDefaultMaxZoom === 'number'){
+          try{ MS.map.setMaxZoom(BASEMAP_STATE.mapDefaultMaxZoom); }catch(e){}
+        }
+      }
+      function fallbackFromTopPlusOpen(){
+        if(BASEMAP_STATE.activeId !== 'topplusopen'){ return; }
+        showBasemapWarning('TopPlusOpen derzeit nicht erreichbar – wechsle auf Positron.');
+        applyBasemapById('positron', { updateUrl: true, persist: true, skipWarning: true });
+      }
+      function monitorTopPlusOpenLayer(layer){
+        if(!layer || typeof layer.on !== 'function'){ return; }
+        clearTopPlusOpenMonitor();
+        BASEMAP_STATE.monitorLayer = layer;
+        BASEMAP_STATE.topplusHasSuccessfulLoad = false;
+        BASEMAP_STATE.tileErrorCount = 0;
+        BASEMAP_STATE.monitorLoadHandler = function(){
+          BASEMAP_STATE.topplusHasSuccessfulLoad = true;
+          BASEMAP_STATE.tileErrorCount = 0;
+          if(BASEMAP_STATE.timeoutId){
+            clearTimeout(BASEMAP_STATE.timeoutId);
+            BASEMAP_STATE.timeoutId = null;
+          }
+        };
+        BASEMAP_STATE.monitorErrorHandler = function(){
+          BASEMAP_STATE.tileErrorCount += 1;
+          if(BASEMAP_STATE.activeId === 'topplusopen' && BASEMAP_STATE.tileErrorCount >= TOPPLUSOPEN_MAX_TILE_ERRORS){
+            fallbackFromTopPlusOpen();
+          }
+        };
+        try{
+          layer.on('load', BASEMAP_STATE.monitorLoadHandler);
+          layer.on('tileerror', BASEMAP_STATE.monitorErrorHandler);
+        }catch(e){}
+        BASEMAP_STATE.timeoutId = setTimeout(function(){
+          if(BASEMAP_STATE.activeId === 'topplusopen' && !BASEMAP_STATE.topplusHasSuccessfulLoad){ fallbackFromTopPlusOpen(); }
+        }, TOPPLUSOPEN_TIMEOUT_MS);
+      }
+      function applyBasemapById(id, options){
+        var opts = options || {};
+        var normalized = normalizeBasemapId(id) || BASEMAP_DEFAULT_ID;
+        if(!MS.map){
+          BASEMAP_STATE.activeId = normalized;
+          return false;
+        }
+        var sameIdActive = normalized === BASEMAP_STATE.activeId && BASEMAP_STATE.activeLayer && MS.map.hasLayer(BASEMAP_STATE.activeLayer);
+        if(sameIdActive){
+          syncMapMaxZoomForBasemap(normalized);
+          if(opts.updateUrl){ updateBasemapUrlParam(normalized); }
+          if(opts.persist){ persistBasemapToStorage(normalized); }
+          return true;
+        }
+        var nextLayer = createBasemapLayer(normalized);
+        if(!nextLayer){ return false; }
+        clearTopPlusOpenMonitor();
+        var previousLayer = BASEMAP_STATE.activeLayer || BASEMAP_STATE.initialLayer || detectCurrentBasemapLayer();
+        if(previousLayer && MS.map.hasLayer(previousLayer)){
+          try{ MS.map.removeLayer(previousLayer); }catch(e){}
+        }
+        try{ nextLayer.addTo(MS.map); }catch(e){ return false; }
+        BASEMAP_STATE.activeLayer = nextLayer;
+        BASEMAP_STATE.activeId = normalized;
+        syncMapMaxZoomForBasemap(normalized);
+        if(normalized === 'topplusopen'){
+          monitorTopPlusOpenLayer(nextLayer);
+        }
+        if(opts.updateUrl){ updateBasemapUrlParam(normalized); }
+        if(opts.persist){ persistBasemapToStorage(normalized); }
+        return true;
+      }
+      function initBasemapRuntime(){
+        if(!MS.map){ return; }
+        if(BASEMAP_STATE.mapDefaultMaxZoom === null && typeof MS.map.getMaxZoom === 'function'){
+          BASEMAP_STATE.mapDefaultMaxZoom = MS.map.getMaxZoom();
+        }
+        if(!BASEMAP_STATE.initialLayer){ BASEMAP_STATE.initialLayer = detectCurrentBasemapLayer(); }
+        BASEMAP_STATE.activeLayer = BASEMAP_STATE.initialLayer;
+        BASEMAP_STATE.activeId = BASEMAP_DEFAULT_ID;
+        var basemapFromUrl = readBasemapFromUrl();
+        var basemapFromStorage = readBasemapFromStorage();
+        var preferredBasemap = basemapFromUrl || basemapFromStorage || BASEMAP_DEFAULT_ID;
+        if(preferredBasemap !== BASEMAP_DEFAULT_ID){
+          var switched = applyBasemapById(preferredBasemap, { updateUrl: !!basemapFromUrl, persist: true });
+          if(!switched && !applyBasemapById(BASEMAP_DEFAULT_ID, { updateUrl: !!basemapFromUrl, persist: true })){
+            BASEMAP_STATE.activeId = BASEMAP_DEFAULT_ID;
+          }
+          return;
+        }
+        persistBasemapToStorage(BASEMAP_DEFAULT_ID);
+        syncMapMaxZoomForBasemap(BASEMAP_DEFAULT_ID);
+        if(basemapFromUrl === BASEMAP_DEFAULT_ID){ updateBasemapUrlParam(BASEMAP_DEFAULT_ID); }
       }
       syncViewportCssVars();
       window.addEventListener('resize', syncViewportCssVars, { passive: true });
@@ -983,6 +1193,9 @@
               '</div>',
             '</aside>',
             '<div id="ms-fab-stack" class="ms-fab-stack" aria-hidden="false">',
+              '<button id="fab-layer" class="ms-fab-layer" type="button" aria-label="Kartenstil wählen">',
+                '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 1 7l11 5 9-4.09V16h2V7L12 2zm0 12L4.2 10.45 2 11.45l10 4.55 10-4.55-2.2-1L12 14zm0 4L4.2 14.45 2 15.45 12 20l10-4.55-2.2-1L12 18z"></path></svg>',
+              '</button>',
               '<button id="fab-filter" class="ms-fab-filter" type="button" aria-label="Filter öffnen">',
                 '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg>',
                 '<span class="ms-fab-badge" aria-hidden="true"></span>',
@@ -990,6 +1203,32 @@
               '<button id="fab-locate" class="ms-fab-locate" type="button" aria-label="Meinen Standort anzeigen">',
                 '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3h-1.99A7.02 7.02 0 0 0 13 5.05V3.06a1 1 0 1 0-2 0v1.99A7.02 7.02 0 0 0 5.05 11H3.06a1 1 0 1 0 0 2h1.99A7.02 7.02 0 0 0 11 18.95v1.99a1 1 0 1 0 2 0v-1.99A7.02 7.02 0 0 0 18.95 13h1.99a1 1 0 1 0 0-2zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"></path></svg>',
               '</button>',
+            '</div>',
+            '<div id="ms-basemap-modal" class="ms-modal ms-hidden" aria-hidden="true">',
+              '<div class="ms-modal-content ms-basemap-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-basemap-title">',
+                '<button id="ms-basemap-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
+                '<h2 id="ms-basemap-title" class="ms-modal-title" tabindex="-1">Kartenstil wählen</h2>',
+                '<form id="ms-basemap-form" class="ms-basemap-form">',
+                  '<label class="ms-basemap-option">',
+                    '<input type="radio" name="ms-basemap" value="positron">',
+                    '<span class="ms-basemap-copy">',
+                      '<span class="ms-basemap-option-title">Positron (CARTO)</span>',
+                      '<span class="ms-basemap-option-desc">Helle, minimalistische Hintergrundkarte. Betont Marker.</span>',
+                    '</span>',
+                  '</label>',
+                  '<label class="ms-basemap-option">',
+                    '<input type="radio" name="ms-basemap" value="topplusopen">',
+                    '<span class="ms-basemap-copy">',
+                      '<span class="ms-basemap-option-title">TopPlusOpen (BKG)</span>',
+                      '<span class="ms-basemap-option-desc">Amtliche Detailkarte für Deutschland (19 Zoomstufen, EPSG:3857).</span>',
+                    '</span>',
+                  '</label>',
+                '</form>',
+                '<div class="ms-basemap-actions">',
+                  '<button id="ms-basemap-apply" class="ms-basemap-apply" type="button">Anwenden</button>',
+                  '<button id="ms-basemap-cancel" class="ms-submit-btn" type="button">Abbrechen</button>',
+                '</div>',
+              '</div>',
             '</div>',
             '<div id="ms-placeholder-modal" class="ms-modal ms-hidden" aria-hidden="true">',
               '<div class="ms-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-placeholder-title">',
@@ -1017,9 +1256,16 @@
             sideClose: document.getElementById('ms-side-close'),
             submitHeaderBtn: document.getElementById('ms-header-submit'),
             fabStack: document.getElementById('ms-fab-stack'),
+            layerFab: document.getElementById('fab-layer'),
             filterFab: document.getElementById('fab-filter'),
             locateFab: document.getElementById('fab-locate'),
             bottomSheet: document.getElementById('ms-bottom-sheet'),
+            basemapModal: document.getElementById('ms-basemap-modal'),
+            basemapTitle: document.getElementById('ms-basemap-title'),
+            basemapForm: document.getElementById('ms-basemap-form'),
+            basemapApply: document.getElementById('ms-basemap-apply'),
+            basemapCancel: document.getElementById('ms-basemap-cancel'),
+            basemapClose: document.getElementById('ms-basemap-close'),
             placeholderModal: document.getElementById('ms-placeholder-modal'),
             placeholderTitle: document.getElementById('ms-placeholder-title'),
             placeholderText: document.getElementById('ms-placeholder-text'),
@@ -1113,6 +1359,48 @@
             return;
           }
           showShareToast('Kopieren nicht unterstützt.');
+        }
+        function syncBasemapModalSelection(){
+          if(!mobileRefs || !mobileRefs.basemapForm){ return; }
+          var activeBasemap = normalizeBasemapId(BASEMAP_STATE.activeId) || BASEMAP_DEFAULT_ID;
+          var selectedInput = mobileRefs.basemapForm.querySelector('input[name="ms-basemap"][value="' + activeBasemap + '"]');
+          if(selectedInput){ selectedInput.checked = true; }
+        }
+        function getBasemapSelectionFromModal(){
+          if(!mobileRefs || !mobileRefs.basemapForm){ return ''; }
+          var checked = mobileRefs.basemapForm.querySelector('input[name="ms-basemap"]:checked');
+          return normalizeBasemapId(checked ? checked.value : '');
+        }
+        function closeBasemapModal(returnFocus){
+          if(!mobileRefs || !mobileRefs.basemapModal){ return; }
+          mobileRefs.basemapModal.classList.add('ms-hidden');
+          mobileRefs.basemapModal.setAttribute('aria-hidden', 'true');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(returnFocus && mobileRefs.layerFab && typeof mobileRefs.layerFab.focus === 'function'){
+            mobileRefs.layerFab.focus();
+          }
+        }
+        function openBasemapModal(){
+          if(!mobileRefs || !mobileRefs.basemapModal){ return; }
+          closeMobileTransientOverlays({ keepBasemapModal: true, forceShowControl: true });
+          syncBasemapModalSelection();
+          mobileRefs.basemapModal.classList.remove('ms-hidden');
+          mobileRefs.basemapModal.setAttribute('aria-hidden', 'false');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(mobileRefs.basemapTitle){
+            setTimeout(function(){ try{ mobileRefs.basemapTitle.focus(); }catch(e){} }, 0);
+          }
+        }
+        function applyBasemapSelectionFromModal(){
+          var selectedId = getBasemapSelectionFromModal() || BASEMAP_DEFAULT_ID;
+          var switched = applyBasemapById(selectedId, { updateUrl: true, persist: true });
+          if(!switched && selectedId === 'topplusopen'){
+            showBasemapWarning('TopPlusOpen derzeit nicht erreichbar – wechsle auf Positron.');
+            applyBasemapById('positron', { updateUrl: true, persist: true });
+          }
+          closeBasemapModal(true);
         }
 
         function syncFabStackVisibility(){
@@ -1230,6 +1518,7 @@
           });
           addDirectPressListener(mobileRefs.sideClose, function(){ closeSideSheet(true); });
           addDirectPressListener(mobileRefs.sideBackdrop, function(){ closeSideSheet(true); });
+          addDirectPressListener(mobileRefs.layerFab, function(){ openBasemapModal(); });
           addDirectPressListener(mobileRefs.filterFab, function(){ openBottomSheet(); });
           addDirectPressListener(mobileRefs.locateFab, function(){ requestUserLocation(); });
 
@@ -1428,6 +1717,9 @@
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.bottomSheet && mobileRefs.bottomSheet.classList.contains('open')){
               closeBottomSheet();
             }
+            if(ev.key === 'Escape' && mobileRefs && mobileRefs.basemapModal && !mobileRefs.basemapModal.classList.contains('ms-hidden')){
+              closeBasemapModal(true);
+            }
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.placeholderModal && !mobileRefs.placeholderModal.classList.contains('ms-hidden')){
               closePlaceholder();
             }
@@ -1438,6 +1730,24 @@
           }
           if(mobileRefs.placeholderModal){
             addCleanup(mobileRefs.placeholderModal, 'click', function(ev){ if(ev.target === mobileRefs.placeholderModal){ closePlaceholder(); } });
+          }
+          if(mobileRefs.basemapApply){
+            addCleanup(mobileRefs.basemapApply, 'click', function(){ applyBasemapSelectionFromModal(); });
+          }
+          if(mobileRefs.basemapCancel){
+            addCleanup(mobileRefs.basemapCancel, 'click', function(){ closeBasemapModal(true); });
+          }
+          if(mobileRefs.basemapClose){
+            addCleanup(mobileRefs.basemapClose, 'click', function(){ closeBasemapModal(true); });
+          }
+          if(mobileRefs.basemapModal){
+            addCleanup(mobileRefs.basemapModal, 'click', function(ev){ if(ev.target === mobileRefs.basemapModal){ closeBasemapModal(true); } });
+          }
+          if(mobileRefs.basemapForm){
+            addCleanup(mobileRefs.basemapForm, 'submit', function(ev){
+              if(ev && ev.preventDefault){ ev.preventDefault(); }
+              applyBasemapSelectionFromModal();
+            });
           }
 
           addCleanup(mobileRefs.sideSheet, 'click', function(ev){
@@ -1501,7 +1811,7 @@
           removeLegacyHeaderIfPresent();
           ensureMobileRedesignDom();
           mobileRefs = collectRefs();
-          if(!mobileRefs.header || !mobileRefs.standNode || !mobileRefs.navToggle || !mobileRefs.sideSheet || !mobileRefs.sideBackdrop || !mobileRefs.filterFab || !mobileRefs.bottomSheet){
+          if(!mobileRefs.header || !mobileRefs.standNode || !mobileRefs.navToggle || !mobileRefs.sideSheet || !mobileRefs.sideBackdrop || !mobileRefs.layerFab || !mobileRefs.filterFab || !mobileRefs.bottomSheet || !mobileRefs.basemapModal){
             mobileRefs = null;
             return;
           }
@@ -1590,6 +1900,7 @@
         try{
           if(MS.map && MS.map.options){ MS.map.options.closePopupOnClick = false; }
         }catch(e){}
+        initBasemapRuntime();
         initMarkers();
         bindMarkersForViewportMode();
         removeNativeMapControlsOnMobile();
