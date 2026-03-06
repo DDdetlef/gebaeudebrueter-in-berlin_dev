@@ -700,7 +700,7 @@ body.ms-mobile-redesign .ms-control {
 .ms-fab-stack .ms-fab-filter,
 .ms-fab-stack .ms-fab-locate,
 .ms-fab-stack .ms-fab-layer {
-  position: static;
+  position: relative;
   right: auto;
   bottom: auto;
 }

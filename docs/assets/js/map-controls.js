@@ -1362,6 +1362,7 @@
         var applyMobile = document.getElementById('ms-apply-filters');
         var applyDesktop = document.getElementById('ms-apply-desktop');
         var lastApplyTs = 0;
+        var lastResetTs = 0;
         function stopApplyEventFlow(ev){
           if(!ev){ return; }
           if(ev.cancelable){ ev.preventDefault(); }
@@ -1388,10 +1389,6 @@
               if(!sheet.classList.contains('open')){ return; }
               if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
             }, { capture: true, passive: true });
-            node.addEventListener('click', function(ev){
-              if(!sheet.classList.contains('open')){ return; }
-              if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
-            }, true);
           });
         }
 
@@ -1421,17 +1418,24 @@
           rebuildCluster(Object.keys(SPECIES_COLORS_JS), Object.keys(STATUS_INFO_JS));
           updateFilterFabIndicator();
           // Mobile parity: reset closes sheet just like apply.
-          if(sheet){
-            sheet.classList.remove('open');
-            sheet.setAttribute('aria-hidden', 'true');
-            sheet.style.removeProperty('transform');
+          if(sheet && sheet.classList.contains('open')){
+            closeBottomSheetDom();
           }
         }
+        function runResetAction(ev){
+          stopApplyEventFlow(ev);
+          var now = Date.now();
+          if(now - lastResetTs < 500){ return; }
+          lastResetTs = now;
+          resetFiltersToAll();
+        }
         if(resetBtn){
-          resetBtn.addEventListener('click', resetFiltersToAll);
+          resetBtn.addEventListener('touchend', runResetAction, { passive: false });
+          resetBtn.addEventListener('click', runResetAction);
         }
         if(resetSheetBtn){
-          resetSheetBtn.addEventListener('click', resetFiltersToAll);
+          resetSheetBtn.addEventListener('touchend', runResetAction, { passive: false });
+          resetSheetBtn.addEventListener('click', runResetAction);
         }
       }
       // close bottom sheet when tapping backdrop
