@@ -182,6 +182,18 @@
         var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
         ctrl.classList.toggle('ms-overlay-hidden', shouldHide);
       }
+      function setAttributionHidden(hide){
+        if(!document.body || !document.body.classList){ return; }
+        document.body.classList.toggle('ms-hide-attrib', !!hide);
+      }
+      function hasOpenMobilePanels(){
+        var sideSheet = document.getElementById('ms-side-sheet');
+        var bottomSheet = document.getElementById('ms-bottom-sheet');
+        return !!((sideSheet && sideSheet.classList.contains('is-open')) || (bottomSheet && bottomSheet.classList.contains('open')));
+      }
+      function syncAttributionVisibility(){
+        setAttributionHidden(hasOpenMobilePanels());
+      }
       function hideModalById(id){
         var modal = document.getElementById(id);
         if(!modal){ return; }
@@ -207,6 +219,8 @@
           navToggle.setAttribute('aria-label', 'Menü öffnen');
         }
         try{ document.body.classList.remove('ms-side-open'); }catch(e){}
+        setAttributionHidden(false);
+        syncAttributionVisibility();
       }
       function closeBottomSheetDom(){
         var sheet = document.getElementById('ms-bottom-sheet');
@@ -222,6 +236,8 @@
           fabStack.classList.remove('is-hidden');
           fabStack.setAttribute('aria-hidden', 'false');
         }
+        setAttributionHidden(false);
+        syncAttributionVisibility();
       }
       function closeGbModalOverlay(){
         var overlay = document.getElementById('gbModalOverlay');
@@ -1323,7 +1339,14 @@
       (function(){
         var sheet = document.getElementById('ms-bottom-sheet');
         if(!sheet) return;
-        sheet.addEventListener('click', function(ev){ if(ev.target === sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); } });
+        sheet.addEventListener('click', function(ev){
+          if(ev.target === sheet){
+            sheet.classList.remove('open');
+            sheet.setAttribute('aria-hidden', 'true');
+            setAttributionHidden(false);
+            syncAttributionVisibility();
+          }
+        });
         // also close sheet when tapping the map area (leaflet container) or touching outside the sheet
         function closeIfMapTap(ev){
           try{
@@ -1333,7 +1356,12 @@
             // if tap/click occurred inside the sheet, ignore
             if(target.closest && target.closest('.ms-bottom-sheet')) return;
             // if tap/click occurred inside a leaflet map container, close the sheet
-            if(target.closest && target.closest('.leaflet-container')){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+            if(target.closest && target.closest('.leaflet-container')){
+              sheet.classList.remove('open');
+              sheet.setAttribute('aria-hidden', 'true');
+              setAttributionHidden(false);
+              syncAttributionVisibility();
+            }
           }catch(e){}
         }
         document.addEventListener('click', closeIfMapTap, {passive:true});
@@ -1677,6 +1705,8 @@
           mobileRefs.bottomSheet.style.removeProperty('will-change');
           mobileRefs.bottomSheet.style.removeProperty('transform');
           syncFabStackVisibility();
+          setAttributionHidden(false);
+          syncAttributionVisibility();
         }
 
         function openBottomSheet(){
@@ -1685,6 +1715,7 @@
           mobileRefs.bottomSheet.classList.add('open');
           mobileRefs.bottomSheet.setAttribute('aria-hidden', 'false');
           mobileRefs.bottomSheet.style.removeProperty('transform');
+          setAttributionHidden(true);
           var speciesAccordion = document.getElementById('ms-species-accordion-content');
           var statusAccordion = document.getElementById('ms-status-accordion-content');
           if(speciesAccordion){ speciesAccordion.classList.add('open'); }
@@ -1705,6 +1736,8 @@
           mobileRefs.navToggle.setAttribute('aria-expanded', 'false');
           mobileRefs.navToggle.setAttribute('aria-label', 'Menü öffnen');
           document.body.classList.remove('ms-side-open');
+          setAttributionHidden(false);
+          syncAttributionVisibility();
           if(returnFocus && mobileRefs.__lastOpener && typeof mobileRefs.__lastOpener.focus === 'function'){
             mobileRefs.__lastOpener.focus();
           }
@@ -1723,6 +1756,7 @@
           mobileRefs.navToggle.setAttribute('aria-expanded', 'true');
           mobileRefs.navToggle.setAttribute('aria-label', 'Menü schließen');
           document.body.classList.add('ms-side-open');
+          setAttributionHidden(true);
           var focusables = Array.prototype.slice.call(mobileRefs.sideSheet.querySelectorAll('button, a[href], [tabindex]:not([tabindex="-1"])')).filter(function(el){
             return !el.disabled && el.getAttribute('aria-hidden') !== 'true';
           });
@@ -2105,6 +2139,7 @@
             initDesktop();
             teardownMobile();
           }
+          syncAttributionVisibility();
           safeInvalidateMap();
         }
 
@@ -2119,6 +2154,7 @@
         window.addEventListener('resize', applyViewportGate, { passive: true });
         window.addEventListener('orientationchange', function(){
           applyViewportGate();
+          syncAttributionVisibility();
           safeInvalidateMap();
         }, { passive: true });
       })();
@@ -2135,10 +2171,13 @@
         bindMarkersForViewportMode();
         removeNativeMapControlsOnMobile();
         addLocateMapControl();
+        syncAttributionVisibility();
         window.addEventListener('resize', function(){
           removeNativeMapControlsOnMobile();
           addLocateMapControl();
+          syncAttributionVisibility();
         }, { passive: true });
+        window.addEventListener('orientationchange', syncAttributionVisibility, { passive: true });
         if(MS.map && typeof MS.map.on === 'function'){
           MS.map.on('popupopen', function(e){
             try{

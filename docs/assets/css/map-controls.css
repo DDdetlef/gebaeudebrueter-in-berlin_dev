@@ -39,6 +39,13 @@
       --ms-shadow: 0 6px 18px rgba(0,0,0,0.12);
       --ms-accent: #1976d2;
       --ms-focus: #2684ff;
+      --ms-sidebar-bg: rgb(198, 196, 179);
+      --ms-sidebar-fg: rgb(24, 24, 20);
+      --ms-sidebar-muted: rgb(67, 66, 56);
+      --ms-sidebar-border: rgba(24, 24, 20, 0.26);
+      --ms-sidebar-hover: rgb(184, 182, 165);
+      --ms-sheet-top-bg: var(--nabu-blue);
+      --ms-sheet-bottom-bg: var(--ms-sidebar-bg);
     }
     /* Control box (desktop + mobile pinned top-right) */
     .ms-control {
@@ -120,12 +127,12 @@
     .ms-bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; background: #fff; box-shadow: 0 -8px 24px rgba(0,0,0,0.18); border-top-left-radius: 12px; border-top-right-radius: 12px; transform: translateY(100%); transition: transform .2s cubic-bezier(0.22, 1, 0.36, 1); z-index: 10004; overflow: auto; }
     .ms-bottom-sheet.open { transform: translateY(0%); }
     .ms-bottom-sheet.ms-sheet-dragging { transition: none !important; }
-    .ms-sheet-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom:1px solid #eee; }
-    .ms-sheet-handle { width:36px; height:4px; background:#ddd; border-radius:4px; margin:8px auto; }
+    .ms-sheet-header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom:1px solid var(--ms-sidebar-border); }
+    .ms-sheet-handle { width:36px; height:4px; background:var(--ms-sidebar-border); border-radius:4px; margin:8px auto; }
     .ms-accordion-toggle { width:100%; text-align:left; padding:10px 14px; border:none; background:transparent; font-size:15px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
     .ms-accordion-content { padding: 6px 14px 12px 14px; display:none; }
     .ms-accordion-content.open { display:block; }
-    .ms-sheet-actions { padding:12px 16px; border-top:1px solid #eee; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .ms-sheet-actions { padding:12px 16px; border-top:1px solid var(--ms-sidebar-border); display:flex; align-items:center; justify-content:space-between; gap:8px; background: var(--ms-sheet-bottom-bg); color: var(--ms-sidebar-fg); }
     .ms-sheet-actions button { padding:8px 12px; border-radius:6px; border:1px solid #1976d2; background:#1976d2; color:white; cursor:pointer; }
     .ms-control h4 { margin: 0 0 6px 0; font-size: 13px; }
     .ms-section { background:#f7f7f7; border-radius:8px; padding:8px 10px; margin-top:8px; }
@@ -375,7 +382,12 @@
   position: absolute;
   bottom: calc(var(--ms-safe-bottom-extra, 0px) + 14px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  transition: none !important;
+  transition: opacity .16s ease !important;
+}
+
+body.ms-hide-attrib .leaflet-bottom.leaflet-left {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .leaflet-bottom.leaflet-left .leaflet-control-attribution {
@@ -415,7 +427,11 @@
   --nabu-blue: hsl(205, 100%, 35%);
   --ms-header-height: 56px;
   --ms-header-bg: var(--nabu-blue);
-  --ms-sidebar-bg: hsl(80, 43%, 85%);
+  --ms-sidebar-bg: rgb(198, 196, 179);
+  --ms-sidebar-fg: rgb(24, 24, 20);
+  --ms-sidebar-muted: rgb(67, 66, 56);
+  --ms-sidebar-border: rgba(24, 24, 20, 0.26);
+  --ms-sidebar-hover: rgb(184, 182, 165);
   --ms-sheet-top-bg: var(--nabu-blue);
   --ms-sheet-bottom-bg: var(--ms-sidebar-bg);
   --ms-safe-bottom-extra: 0px;
@@ -428,6 +444,12 @@
   --ms-fab-right: 12px;
   --ms-fab-bottom: 12px;
   --ms-fab-gap: 10px;
+}
+
+html.theme-alt,
+body.theme-alt {
+  --ms-sidebar-bg: rgb(227, 226, 212);
+  --ms-sidebar-hover: rgb(214, 213, 198);
 }
 
 body.ms-mobile-redesign {
@@ -539,6 +561,7 @@ body.ms-mobile-redesign .ms-control {
   flex-direction: column;
   padding-top: 8px;
   overflow-y: auto;
+  color: var(--ms-sidebar-fg);
 }
 .ms-side-sheet.is-open {
   transform: translateX(0);
@@ -549,8 +572,9 @@ body.ms-mobile-redesign .ms-control {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(0,0,0,0.14);
-  color: hsl(0, 0%, 20%);
+  border-bottom: 1px solid var(--ms-sidebar-border);
+  color: var(--ms-sidebar-fg);
+  background: var(--ms-sidebar-bg);
 }
 .ms-side-nav {
   display: flex;
@@ -565,7 +589,7 @@ body.ms-mobile-redesign .ms-control {
 .ms-side-item {
   border: 0;
   background: transparent;
-  color: hsl(0, 0%, 20%);
+  color: var(--ms-sidebar-fg);
   text-decoration: none;
   font: inherit;
   font-size: 16px;
@@ -582,7 +606,7 @@ body.ms-mobile-redesign .ms-control {
 }
 .ms-side-item:hover,
 .ms-side-item:active {
-  background: hsl(80, 43%, 75%);
+  background: var(--ms-sidebar-hover);
 }
 .ms-side-item:active {
   filter: brightness(0.95);
@@ -621,13 +645,13 @@ body.ms-mobile-redesign .ms-control {
 .ms-side-divider {
   height: 1px;
   margin: 6px 8px;
-  background: rgba(0,0,0,0.18);
+  background: var(--ms-sidebar-border);
 }
 .ms-side-section-label {
   padding: 10px 12px 4px;
   font-size: 12px;
   font-weight: 700;
-  color: rgba(0,0,0,0.65);
+  color: var(--ms-sidebar-muted);
   text-transform: uppercase;
   letter-spacing: .03em;
 }
@@ -709,6 +733,7 @@ body.ms-mobile-redesign .ms-control {
   touch-action: pan-y;
   will-change: transform;
   contain: layout paint;
+  color: var(--ms-sidebar-fg);
 }
 #ms-info-modal,
 #ms-submit-modal,
@@ -728,7 +753,8 @@ body.ms-mobile-redesign .ms-control {
   flex-wrap: nowrap;
   background: var(--ms-sheet-bottom-bg);
   padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px) + var(--ms-safe-bottom-extra));
-  border-top: 1px solid rgba(0,0,0,0.14);
+  border-top: 1px solid var(--ms-sidebar-border);
+  color: var(--ms-sidebar-fg);
 }
 #ms-apply-filters,
 #ms-reset-sheet,
@@ -748,9 +774,9 @@ body.ms-mobile-redesign .ms-control {
 }
 #ms-reset-sheet,
 #ms-reset {
-  background: #fff;
-  color: var(--nabu-blue);
-  border: 1px solid var(--nabu-blue);
+  background: rgba(255,255,255,0.72);
+  color: var(--ms-sidebar-fg);
+  border: 1px solid var(--ms-sidebar-border);
 }
 #ms-reset-sheet .ms-reset-ico,
 #ms-reset .ms-reset-ico {
@@ -866,14 +892,14 @@ body.ms-side-open {
     background: rgba(255,255,255,0.6);
   }
   #ms-bottom-sheet .ms-accordion-toggle {
-    color: hsl(0, 0%, 20%);
+    color: var(--ms-sidebar-fg);
     padding-left: 20px;
     padding-right: 20px;
   }
   #ms-bottom-sheet .ms-accordion-content {
     padding-left: 20px;
     padding-right: 20px;
-    color: hsl(0, 0%, 20%);
+    color: var(--ms-sidebar-fg);
   }
 
   #ms-bottom-sheet .ms-accordion-toggle,
@@ -911,12 +937,13 @@ body.ms-side-open {
 #ms-side-close {
   border-radius: 999px;
   background: var(--ms-sidebar-bg);
-  border-color: rgba(0,0,0,.12);
+  color: var(--ms-sidebar-fg);
+  border-color: var(--ms-sidebar-border);
   box-shadow: none;
 }
 #ms-side-close:hover {
-  background: hsl(80, 43%, 79%);
-  border-color: rgba(0,0,0,.16);
+  background: var(--ms-sidebar-hover);
+  border-color: var(--ms-sidebar-border);
 }
 
 @media (prefers-reduced-motion: reduce) {
