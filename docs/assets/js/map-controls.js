@@ -182,9 +182,59 @@
         var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
         ctrl.classList.toggle('ms-overlay-hidden', shouldHide);
       }
+      var ATTRIB_PREV_TABINDEX_ATTR = 'data-ms-prev-tabindex';
+      var ATTRIB_NO_TABINDEX_SENTINEL = '__ms-no-tabindex__';
+      var attributionUnlockTimer = null;
       function setAttributionHidden(hide){
         if(!document.body || !document.body.classList){ return; }
-        document.body.classList.toggle('ms-hide-attrib', !!hide);
+        var shouldHide = !!hide;
+        document.body.classList.toggle('ms-hide-attrib', shouldHide);
+
+        var attributionRoot = document.querySelector('.leaflet-bottom.leaflet-left');
+        if(!attributionRoot){ return; }
+
+        attributionRoot.setAttribute('aria-hidden', shouldHide ? 'true' : 'false');
+        try{
+          if('inert' in attributionRoot){ attributionRoot.inert = shouldHide; }
+          else if(shouldHide){ attributionRoot.setAttribute('inert', ''); }
+          else { attributionRoot.removeAttribute('inert'); }
+        }catch(e){}
+
+        var links = attributionRoot.querySelectorAll('a[href]');
+        links.forEach(function(link){
+          if(shouldHide){
+            if(!link.hasAttribute(ATTRIB_PREV_TABINDEX_ATTR)){
+              if(link.hasAttribute('tabindex')){ link.setAttribute(ATTRIB_PREV_TABINDEX_ATTR, link.getAttribute('tabindex') || ''); }
+              else { link.setAttribute(ATTRIB_PREV_TABINDEX_ATTR, ATTRIB_NO_TABINDEX_SENTINEL); }
+            }
+            link.setAttribute('tabindex', '-1');
+            link.setAttribute('aria-hidden', 'true');
+            link.setAttribute('aria-disabled', 'true');
+          } else {
+            var prevTabindex = link.getAttribute(ATTRIB_PREV_TABINDEX_ATTR);
+            if(prevTabindex !== null){
+              if(prevTabindex === ATTRIB_NO_TABINDEX_SENTINEL){ link.removeAttribute('tabindex'); }
+              else { link.setAttribute('tabindex', prevTabindex); }
+              link.removeAttribute(ATTRIB_PREV_TABINDEX_ATTR);
+            } else if(link.getAttribute('tabindex') === '-1'){
+              link.removeAttribute('tabindex');
+            }
+            link.removeAttribute('aria-hidden');
+            link.removeAttribute('aria-disabled');
+          }
+        });
+      }
+      function holdAttributionInert(durationMs){
+        var delay = Math.max(0, Number(durationMs) || 0);
+        if(attributionUnlockTimer){
+          clearTimeout(attributionUnlockTimer);
+          attributionUnlockTimer = null;
+        }
+        setAttributionHidden(true);
+        attributionUnlockTimer = setTimeout(function(){
+          attributionUnlockTimer = null;
+          syncAttributionVisibility();
+        }, delay);
       }
       function hasOpenMobilePanels(){
         var sideSheet = document.getElementById('ms-side-sheet');
@@ -236,8 +286,7 @@
           fabStack.classList.remove('is-hidden');
           fabStack.setAttribute('aria-hidden', 'false');
         }
-        setAttributionHidden(false);
-        syncAttributionVisibility();
+        holdAttributionInert(220);
       }
       function closeGbModalOverlay(){
         var overlay = document.getElementById('gbModalOverlay');
@@ -1312,14 +1361,47 @@
 
         var applyMobile = document.getElementById('ms-apply-filters');
         var applyDesktop = document.getElementById('ms-apply-desktop');
-        if(applyMobile){
-          applyMobile.addEventListener('click', function(){
-            applyFilters();
-            if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+        var lastApplyTs = 0;
+        function stopApplyEventFlow(ev){
+          if(!ev){ return; }
+          if(ev.cancelable){ ev.preventDefault(); }
+          if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
+          if(typeof ev.stopImmediatePropagation === 'function'){ ev.stopImmediatePropagation(); }
+        }
+        function runApplyAction(ev, closeSheetAfterApply){
+          stopApplyEventFlow(ev);
+          var now = Date.now();
+          if(now - lastApplyTs < 500){ return; }
+          lastApplyTs = now;
+          applyFilters();
+          if(closeSheetAfterApply){ closeBottomSheetDom(); }
+        }
+
+        if(sheet){
+          var actionNodes = sheet.querySelectorAll('.ms-sheet-actions button, .ms-sheet-actions a');
+          actionNodes.forEach(function(node){
+            node.addEventListener('pointerdown', function(ev){
+              if(!sheet.classList.contains('open')){ return; }
+              if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
+            }, true);
+            node.addEventListener('touchstart', function(ev){
+              if(!sheet.classList.contains('open')){ return; }
+              if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
+            }, { capture: true, passive: true });
+            node.addEventListener('click', function(ev){
+              if(!sheet.classList.contains('open')){ return; }
+              if(typeof ev.stopPropagation === 'function'){ ev.stopPropagation(); }
+            }, true);
           });
         }
+
+        if(applyMobile){
+          applyMobile.addEventListener('touchend', function(ev){ runApplyAction(ev, true); }, { passive: false });
+          applyMobile.addEventListener('click', function(ev){ runApplyAction(ev, true); });
+        }
         if(applyDesktop){
-          applyDesktop.addEventListener('click', function(){ applyFilters(); });
+          applyDesktop.addEventListener('touchend', function(ev){ runApplyAction(ev, false); }, { passive: false });
+          applyDesktop.addEventListener('click', function(ev){ runApplyAction(ev, false); });
         }
 
         document.querySelectorAll('.ms-accordion-toggle').forEach(function(toggle){
@@ -1358,10 +1440,7 @@
         if(!sheet) return;
         sheet.addEventListener('click', function(ev){
           if(ev.target === sheet){
-            sheet.classList.remove('open');
-            sheet.setAttribute('aria-hidden', 'true');
-            setAttributionHidden(false);
-            syncAttributionVisibility();
+            closeBottomSheetDom();
           }
         });
         // also close sheet when tapping the map area (leaflet container) or touching outside the sheet
@@ -1374,10 +1453,7 @@
             if(target.closest && target.closest('.ms-bottom-sheet')) return;
             // if tap/click occurred inside a leaflet map container, close the sheet
             if(target.closest && target.closest('.leaflet-container')){
-              sheet.classList.remove('open');
-              sheet.setAttribute('aria-hidden', 'true');
-              setAttributionHidden(false);
-              syncAttributionVisibility();
+              closeBottomSheetDom();
             }
           }catch(e){}
         }
@@ -1722,8 +1798,7 @@
           mobileRefs.bottomSheet.style.removeProperty('will-change');
           mobileRefs.bottomSheet.style.removeProperty('transform');
           syncFabStackVisibility();
-          setAttributionHidden(false);
-          syncAttributionVisibility();
+          holdAttributionInert(220);
         }
 
         function openBottomSheet(){

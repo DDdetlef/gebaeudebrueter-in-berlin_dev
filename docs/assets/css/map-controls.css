@@ -387,6 +387,11 @@
 
 body.ms-hide-attrib .leaflet-bottom.leaflet-left {
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.ms-hide-attrib .leaflet-bottom.leaflet-left .leaflet-control-attribution a {
   pointer-events: none;
 }
 
