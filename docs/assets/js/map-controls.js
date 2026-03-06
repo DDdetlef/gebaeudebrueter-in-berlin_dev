@@ -1226,8 +1226,26 @@
       }
       function updateFilterFabIndicator(){
         var funnelFab = document.getElementById('fab-filter');
+        var layerFab = document.getElementById('fab-layer');
         var speciesBoxes = document.querySelectorAll('.ms-filter-species');
         var statusBoxes = document.querySelectorAll('.ms-filter-status');
+
+        if(layerFab){
+          var legacyLayerBadge = layerFab.querySelector('.ms-fab-badge');
+          while(legacyLayerBadge){
+            legacyLayerBadge.remove();
+            legacyLayerBadge = layerFab.querySelector('.ms-fab-badge');
+          }
+          layerFab.classList.remove('is-active');
+        }
+
+        if(funnelFab && !funnelFab.querySelector('.ms-fab-badge')){
+          var badge = document.createElement('span');
+          badge.className = 'ms-fab-badge';
+          badge.setAttribute('aria-hidden', 'true');
+          funnelFab.appendChild(badge);
+        }
+
         if(!funnelFab || !speciesBoxes.length || !statusBoxes.length){
           if(funnelFab) funnelFab.classList.remove('is-active');
           return;
