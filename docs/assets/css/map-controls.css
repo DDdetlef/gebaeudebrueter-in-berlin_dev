@@ -135,6 +135,44 @@
     .ms-contact-link:focus {
       text-decoration: underline;
     }
+    #ms-cover-modal {
+      align-items: stretch;
+      justify-content: stretch;
+      background: rgba(0,0,0,0.78);
+    }
+    #ms-cover-modal .ms-cover-modal-content {
+      width: 100vw;
+      max-width: 100vw;
+      height: min(100vh, calc(100 * var(--ms-vh, 1vh)));
+      max-height: min(100vh, calc(100 * var(--ms-vh, 1vh)));
+      border-radius: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ms-cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #ms-cover-modal .ms-modal-close {
+      position: absolute;
+      top: max(10px, env(safe-area-inset-top, 0px));
+      right: max(10px, env(safe-area-inset-right, 0px));
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 999px;
+      z-index: 2;
+    }
+    #ms-cover-modal .ms-modal-close:hover {
+      background: rgba(0,0,0,0.72);
+    }
     .ms-modal-title { font-weight: 700; }
     .ms-modal-section-title { font-weight: 700; }
     .ms-modal-row { display:flex; gap:16px; align-items:flex-start; margin-top:4px; flex-wrap:wrap; }
@@ -808,6 +846,7 @@ body.ms-mobile-redesign .ms-control {
 #ms-info-modal,
 #ms-submit-modal,
 #ms-basemap-modal,
+#ms-cover-modal,
 #ms-placeholder-modal,
 #ms-marker-modal {
   z-index: 10080 !important;

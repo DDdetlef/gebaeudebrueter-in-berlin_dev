@@ -8,8 +8,10 @@
       var FEEDBACK_MAILTO = 'mailto:detlefdev@gmail.com?subject=Feedback%20zur%20Karte';
       var ABOUT_APP_TEXT = 'Die NABU Gebäudebrüter Berlin – KartenApp (v.2.0) zeigt Nist‑ und Brutstandorte aus der Online‑Datenbank der NABU-Bezirksgruppe Steglitz-Zehlendorf und macht Gebäudebrüter in ganz Berlin sichtbar.\nEntwickelt wurde die App von Andreas Richter für die NABU‑Bezirksgruppe Steglitz‑Zehlendorf, mit Dank an die engagierten Team‑Mitglieder des Projekts Artenschutz am Gebäude.';
       var NABU_LOGO_LINK = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/index.html';
+      var DISTRICT_WEBSITE_URL = NABU_LOGO_LINK;
       var LEGAL_COMBINED_URL = 'https://berlin.nabu.de/impressum/02133.html';
       var SUBMIT_FORM_URL = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/projekte/gebaeudebrueter/12400.html';
+      var TOPIC_INFO_URL = SUBMIT_FORM_URL;
       var BASEMAP_DEFAULT_ID = 'positron';
       var BASEMAP_QUERY_KEY = 'basemap';
       var BASEMAP_STORAGE_KEY = 'ms-basemap';
@@ -177,7 +179,7 @@
         if(!ctrl){ return; }
         if(!isCompactViewport()){ ctrl.classList.remove('ms-overlay-hidden'); return; }
         if(forceShow === true){ ctrl.classList.remove('ms-overlay-hidden'); return; }
-        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-contact-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
+        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-contact-modal') || isModalOpenById('ms-basemap-modal') || isModalOpenById('ms-cover-modal') || hasVisibleMapPopup();
         ctrl.classList.toggle('ms-overlay-hidden', shouldHide);
       }
       var ATTRIB_PREV_TABINDEX_ATTR = 'data-ms-prev-tabindex';
@@ -305,6 +307,7 @@
         if(!opts.keepSubmitModal){ hideModalById('ms-submit-modal'); }
         if(!opts.keepContactModal){ hideModalById('ms-contact-modal'); }
         if(!opts.keepBasemapModal){ hideModalById('ms-basemap-modal'); }
+        if(!opts.keepCoverModal){ hideModalById('ms-cover-modal'); }
         if(!opts.keepPlaceholderModal){ hideModalById('ms-placeholder-modal'); }
         if(!opts.keepBottomSheet){ closeBottomSheetDom(); }
         if(!opts.keepSideSheet){ closeSideSheetDom(); }
@@ -1544,14 +1547,14 @@
               '<nav class="ms-side-nav" aria-label="Hauptnavigation">',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="filter"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 4h18l-7 8v6a1 1 0 0 1-1.45.89l-2.5-1.25A1 1 0 0 1 9 17v-5L3 4z"></path></svg></span><span>Filter</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="info"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11 10h2v7h-2zm0-4h2v2h-2z"></path><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path></svg></span><span>Info &amp; Hilfe</span></button>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teile Karte</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="share"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 16a3 3 0 0 0-2.24 1.01L8.91 13.7a3.1 3.1 0 0 0 0-3.4l6.85-3.31A3 3 0 1 0 15 5a3 3 0 0 0 .05.55L8.2 8.86a3 3 0 1 0 0 6.28l6.85 3.31A3 3 0 1 0 18 16z"></path></svg></span><span>Teilen/Share</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="feedback"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg></span><span>Sende Feedback</span></button>',
-                '<div class="ms-side-divider" role="separator" aria-hidden="true"></div>',
-                '<div class="ms-side-section-label">Rechtliches</div>',
-                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-terms"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5"></path><path fill="currentColor" d="M8 11h8v1.5H8zM8 14h8v1.5H8zM8 17h6v1.5H8z"></path></svg></span><span>Nutzungsbedingungen</span></button>',
-                '<a class="ms-side-item" data-ms-nav-action="legal-combined" href="' + LEGAL_COMBINED_URL + '" target="_blank" rel="noopener noreferrer"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutz</span></a>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="topic-info"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 18H8V4h10v16zM4 6H2v16a2 2 0 0 0 2 2h12v-2H4V6zm6 2h6v2h-6zm0 4h6v2h-6zm0 4h4v2h-4z"></path></svg></span><span>Mehr Infos zum Thema</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="district-website"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm6.93 9h-3.05a15.8 15.8 0 0 0-1.38-5.02A8.03 8.03 0 0 1 18.93 11zM12 4.07c.8 1.08 1.89 3.19 2.28 6.93h-4.56C10.11 7.26 11.2 5.15 12 4.07zM9.5 5.98A15.8 15.8 0 0 0 8.12 11H5.07A8.03 8.03 0 0 1 9.5 5.98zM4.26 13h3.86a15.8 15.8 0 0 0 1.38 5.02A8.03 8.03 0 0 1 4.26 13zM12 19.93c-.8-1.08-1.89-3.19-2.28-6.93h4.56c-.39 3.74-1.48 5.85-2.28 6.93zm2.5-1.91A15.8 15.8 0 0 0 15.88 13h3.86a8.03 8.03 0 0 1-5.24 5.02z"></path></svg></span><span>Website der Bezirksgruppe</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="contact"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11zm1.8.3 7.2 5.2 7.2-5.2v-.3a1 1 0 0 0-1-1h-12.4a1 1 0 0 0-1 1v.3zm14.4 2-6.7 4.8a1 1 0 0 1-1.2 0L4.8 8.8v8.7a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1V8.8z"></path></svg></span><span>Kontakt</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="cover-splash"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M21 5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5zM8.5 8a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM19 19H5l4-5 3 3 4-5 3 4z"></path></svg></span><span>Cover / Splash</span></button>',
                 '<button class="ms-side-item" type="button" data-ms-nav-action="about-app"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"></path></svg></span><span>Über diese App</span></button>',
+                '<button class="ms-side-item" type="button" data-ms-nav-action="legal-combined"><span class="ms-side-icon"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5.5V11c0 5.3 3.4 10.3 8 11.8 4.6-1.5 8-6.5 8-11.8V5.5L12 2zm0 4.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zm-2.1 5h4.2v7h-1.6v-2.6h-1v2.6H9.9v-7z"></path></svg></span><span>Impressum &amp; Datenschutz</span></button>',
               '</nav>',
               '<div class="ms-side-footer">',
                 '<a class="ms-side-footer-link" href="' + NABU_LOGO_LINK + '" target="_blank" rel="noopener noreferrer">NABU Bezirksgruppe Steglitz-Zehlendorf</a>',
@@ -1607,6 +1610,12 @@
                 '</div>',
               '</div>',
             '</div>',
+            '<div id="ms-cover-modal" class="ms-modal ms-hidden" aria-hidden="true">',
+              '<div class="ms-modal-content ms-cover-modal-content" role="dialog" aria-modal="true" aria-label="Cover / Splash">',
+                '<button id="ms-cover-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
+                '<img class="ms-cover-image" src="images/splash.png" alt="Cover: Gebäudebrüter in Berlin" onerror="if(!this.dataset.fallback1){this.dataset.fallback1=\'1\';this.src=\'docs/images/splash.png\';}else{this.style.display=\'none\';}">',
+              '</div>',
+            '</div>',
             '<div id="ms-placeholder-modal" class="ms-modal ms-hidden" aria-hidden="true">',
               '<div class="ms-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-placeholder-title">',
                 '<button id="ms-placeholder-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
@@ -1646,6 +1655,8 @@
             contactModal: document.getElementById('ms-contact-modal'),
             contactTitle: document.getElementById('ms-contact-title'),
             contactClose: document.getElementById('ms-contact-close'),
+            coverModal: document.getElementById('ms-cover-modal'),
+            coverClose: document.getElementById('ms-cover-close'),
             placeholderModal: document.getElementById('ms-placeholder-modal'),
             placeholderTitle: document.getElementById('ms-placeholder-title'),
             placeholderText: document.getElementById('ms-placeholder-text'),
@@ -1733,6 +1744,27 @@
           syncMobileControlVisibility();
           if(mobileRefs.contactTitle){
             setTimeout(function(){ try{ mobileRefs.contactTitle.focus(); }catch(e){} }, 0);
+          }
+        }
+        function closeCoverModal(returnFocus){
+          if(!mobileRefs || !mobileRefs.coverModal){ return; }
+          mobileRefs.coverModal.classList.add('ms-hidden');
+          mobileRefs.coverModal.setAttribute('aria-hidden', 'true');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(returnFocus && mobileRefs.navToggle && typeof mobileRefs.navToggle.focus === 'function'){
+            mobileRefs.navToggle.focus();
+          }
+        }
+        function openCoverModal(){
+          if(!mobileRefs || !mobileRefs.coverModal){ return; }
+          closeMobileTransientOverlays({ keepCoverModal: true, forceShowControl: true });
+          mobileRefs.coverModal.classList.remove('ms-hidden');
+          mobileRefs.coverModal.setAttribute('aria-hidden', 'false');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(mobileRefs.coverClose){
+            setTimeout(function(){ try{ mobileRefs.coverClose.focus(); }catch(e){} }, 0);
           }
         }
         function openAboutAppInfo(){
@@ -2113,6 +2145,9 @@
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.contactModal && !mobileRefs.contactModal.classList.contains('ms-hidden')){
               closeContactModal(true);
             }
+            if(ev.key === 'Escape' && mobileRefs && mobileRefs.coverModal && !mobileRefs.coverModal.classList.contains('ms-hidden')){
+              closeCoverModal(true);
+            }
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.placeholderModal && !mobileRefs.placeholderModal.classList.contains('ms-hidden')){
               closePlaceholder();
             }
@@ -2123,6 +2158,13 @@
           }
           if(mobileRefs.contactModal){
             addCleanup(mobileRefs.contactModal, 'click', function(ev){ if(ev.target === mobileRefs.contactModal){ closeContactModal(true); } });
+          }
+
+          if(mobileRefs.coverClose){
+            addCleanup(mobileRefs.coverClose, 'click', function(){ closeCoverModal(true); });
+          }
+          if(mobileRefs.coverModal){
+            addCleanup(mobileRefs.coverModal, 'click', function(ev){ if(ev.target === mobileRefs.coverModal){ closeCoverModal(true); } });
           }
 
           if(mobileRefs.placeholderClose){
@@ -2177,16 +2219,27 @@
               try{ window.location.href = FEEDBACK_MAILTO; }catch(e){}
               return;
             }
+            if(action === 'topic-info'){
+              closeSideSheet(false);
+              openUrlInNewTabSecure(TOPIC_INFO_URL);
+              return;
+            }
+            if(action === 'district-website'){
+              closeSideSheet(false);
+              openUrlInNewTabSecure(DISTRICT_WEBSITE_URL);
+              return;
+            }
             if(action === 'contact'){
               openContactModal();
               return;
             }
-            if(action === 'legal-terms'){
-              openPlaceholder('Nutzungsbedingungen', 'Nutzungsbedingungen werden derzeit vorbereitet.');
+            if(action === 'cover-splash'){
+              openCoverModal();
               return;
             }
             if(action === 'legal-combined'){
               closeSideSheet(false);
+              openUrlInNewTabSecure(LEGAL_COMBINED_URL);
               return;
             }
           });
