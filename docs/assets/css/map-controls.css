@@ -117,6 +117,24 @@
     .ms-basemap-apply:hover { filter: brightness(1.04); }
     .ms-basemap-apply:active { transform: translateY(1px); }
     .ms-basemap-apply:focus-visible { outline: 2px solid var(--ms-focus); outline-offset: 2px; }
+    .ms-contact-modal-content { max-width: 560px; }
+    .ms-contact-modal-body { margin-top: 8px; display:flex; flex-direction:column; gap:7px; }
+    .ms-contact-title { margin:0; padding-right:42px; font-size:20px; line-height:1.25; color:#1f1f1f; }
+    .ms-contact-subtitle { margin:0; font-size:15px; font-weight:600; line-height:1.25; color:#303030; white-space:nowrap; }
+    .ms-contact-entry { margin:0; font-size:15px; line-height:1.35; color:#222; }
+    .ms-contact-link,
+    .ms-contact-link:link,
+    .ms-contact-link:visited,
+    .ms-contact-link:hover,
+    .ms-contact-link:focus,
+    .ms-contact-link:active {
+      color: var(--nabu-blue, #005ca9);
+      text-decoration: none;
+    }
+    .ms-contact-link:hover,
+    .ms-contact-link:focus {
+      text-decoration: underline;
+    }
     .ms-modal-title { font-weight: 700; }
     .ms-modal-section-title { font-weight: 700; }
     .ms-modal-row { display:flex; gap:16px; align-items:flex-start; margin-top:4px; flex-wrap:wrap; }
@@ -344,6 +362,9 @@
       .ms-modal-image { flex: 0 0 auto; display:flex; justify-content:center; align-items:center; order: -1; }
       .ms-modal-text { flex: 1 1 100%; }
       .ms-modal-logo-lg { max-width:220px; max-height:140px; margin: 0 auto; }
+      .ms-contact-title { font-size: 18px; }
+      .ms-contact-subtitle { font-size: 14px; }
+      .ms-contact-entry { font-size: 14px; }
       #ms-submit-btn-sheet {
         font-size: 12px;
         padding: 6px 10px;

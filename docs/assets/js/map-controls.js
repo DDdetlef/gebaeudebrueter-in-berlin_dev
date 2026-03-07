@@ -6,8 +6,6 @@
       var ALL_STATUS = Object.keys(STATUS_INFO_JS);
       var MOBILE_MAX_WIDTH = 768;
       var FEEDBACK_MAILTO = 'mailto:detlefdev@gmail.com?subject=Feedback%20zur%20Karte';
-      var CONTACT_MAILTO = 'mailto:detlefdev@gmail.com?subject=Kontakt%20zur%20Karte';
-      var CONTACT_UNAVAILABLE_TEXT = 'Kontaktangaben werden in Kürze verfügbar sein.';
       var ABOUT_APP_TEXT = 'Die NABU Gebäudebrüter Berlin – KartenApp (v.2.0) zeigt Nist‑ und Brutstandorte aus der Online‑Datenbank der NABU-Bezirksgruppe Steglitz-Zehlendorf und macht Gebäudebrüter in ganz Berlin sichtbar.\nEntwickelt wurde die App von Andreas Richter für die NABU‑Bezirksgruppe Steglitz‑Zehlendorf, mit Dank an die engagierten Team‑Mitglieder des Projekts Artenschutz am Gebäude.';
       var NABU_LOGO_LINK = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/index.html';
       var LEGAL_COMBINED_URL = 'https://berlin.nabu.de/impressum/02133.html';
@@ -179,7 +177,7 @@
         if(!ctrl){ return; }
         if(!isCompactViewport()){ ctrl.classList.remove('ms-overlay-hidden'); return; }
         if(forceShow === true){ ctrl.classList.remove('ms-overlay-hidden'); return; }
-        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
+        var shouldHide = isModalOpenById('ms-info-modal') || isModalOpenById('ms-submit-modal') || isModalOpenById('ms-contact-modal') || isModalOpenById('ms-basemap-modal') || hasVisibleMapPopup();
         ctrl.classList.toggle('ms-overlay-hidden', shouldHide);
       }
       var ATTRIB_PREV_TABINDEX_ATTR = 'data-ms-prev-tabindex';
@@ -305,6 +303,7 @@
         if(!opts.keepMarkerOverlay){ closeAnyOpenMarkerOverlay(); }
         if(!opts.keepInfoModal){ hideModalById('ms-info-modal'); }
         if(!opts.keepSubmitModal){ hideModalById('ms-submit-modal'); }
+        if(!opts.keepContactModal){ hideModalById('ms-contact-modal'); }
         if(!opts.keepBasemapModal){ hideModalById('ms-basemap-modal'); }
         if(!opts.keepPlaceholderModal){ hideModalById('ms-placeholder-modal'); }
         if(!opts.keepBottomSheet){ closeBottomSheetDom(); }
@@ -1598,6 +1597,18 @@
                 '</div>',
               '</div>',
             '</div>',
+            '<div id="ms-contact-modal" class="ms-modal ms-hidden" aria-hidden="true">',
+              '<div class="ms-modal-content ms-contact-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-contact-title">',
+                '<button id="ms-contact-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
+                '<div class="ms-contact-modal-body">',
+                  '<h2 id="ms-contact-title" class="ms-modal-title ms-contact-title" tabindex="-1">Kontakt</h2>',
+                  '<p class="ms-contact-subtitle">NABU Bezirksgruppe Steglitz-Zehlendorf</p>',
+                  '<p class="ms-contact-entry"><strong>Andrea Schulz</strong> – Datenpflege &amp; Koordination</p>',
+                  '<p class="ms-contact-entry"><strong>Andreas Richter</strong> – Design &amp; App-Entwicklung</p>',
+                  '<p class="ms-contact-entry">E-Mail: <a class="ms-contact-link" href="mailto:meldung@gebaeudebrueter-in-berlin.de">meldung@gebaeudebrueter-in-berlin.de</a></p>',
+                '</div>',
+              '</div>',
+            '</div>',
             '<div id="ms-placeholder-modal" class="ms-modal ms-hidden" aria-hidden="true">',
               '<div class="ms-modal-content" role="dialog" aria-modal="true" aria-labelledby="ms-placeholder-title">',
                 '<button id="ms-placeholder-close" class="ms-modal-close" type="button" aria-label="Schließen">✕</button>',
@@ -1634,6 +1645,9 @@
             basemapApply: document.getElementById('ms-basemap-apply'),
             basemapCancel: document.getElementById('ms-basemap-cancel'),
             basemapClose: document.getElementById('ms-basemap-close'),
+            contactModal: document.getElementById('ms-contact-modal'),
+            contactTitle: document.getElementById('ms-contact-title'),
+            contactClose: document.getElementById('ms-contact-close'),
             placeholderModal: document.getElementById('ms-placeholder-modal'),
             placeholderTitle: document.getElementById('ms-placeholder-title'),
             placeholderText: document.getElementById('ms-placeholder-text'),
@@ -1702,8 +1716,26 @@
         function showShareToast(message){
           showMobileLocationToast(message || 'Link kopiert.');
         }
-        function openContactLink(){
-          openPlaceholder('Kontakt', CONTACT_UNAVAILABLE_TEXT);
+        function closeContactModal(returnFocus){
+          if(!mobileRefs || !mobileRefs.contactModal){ return; }
+          mobileRefs.contactModal.classList.add('ms-hidden');
+          mobileRefs.contactModal.setAttribute('aria-hidden', 'true');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(returnFocus && mobileRefs.navToggle && typeof mobileRefs.navToggle.focus === 'function'){
+            mobileRefs.navToggle.focus();
+          }
+        }
+        function openContactModal(){
+          if(!mobileRefs || !mobileRefs.contactModal){ return; }
+          closeMobileTransientOverlays({ keepContactModal: true, forceShowControl: true });
+          mobileRefs.contactModal.classList.remove('ms-hidden');
+          mobileRefs.contactModal.setAttribute('aria-hidden', 'false');
+          syncHeaderLayeringOverModals();
+          syncMobileControlVisibility();
+          if(mobileRefs.contactTitle){
+            setTimeout(function(){ try{ mobileRefs.contactTitle.focus(); }catch(e){} }, 0);
+          }
         }
         function openAboutAppInfo(){
           openPlaceholder('Über diese App', ABOUT_APP_TEXT);
@@ -2080,10 +2112,20 @@
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.basemapModal && !mobileRefs.basemapModal.classList.contains('ms-hidden')){
               closeBasemapModal(true);
             }
+            if(ev.key === 'Escape' && mobileRefs && mobileRefs.contactModal && !mobileRefs.contactModal.classList.contains('ms-hidden')){
+              closeContactModal(true);
+            }
             if(ev.key === 'Escape' && mobileRefs && mobileRefs.placeholderModal && !mobileRefs.placeholderModal.classList.contains('ms-hidden')){
               closePlaceholder();
             }
           });
+
+          if(mobileRefs.contactClose){
+            addCleanup(mobileRefs.contactClose, 'click', function(){ closeContactModal(true); });
+          }
+          if(mobileRefs.contactModal){
+            addCleanup(mobileRefs.contactModal, 'click', function(ev){ if(ev.target === mobileRefs.contactModal){ closeContactModal(true); } });
+          }
 
           if(mobileRefs.placeholderClose){
             addCleanup(mobileRefs.placeholderClose, 'click', function(){ closePlaceholder(); });
@@ -2138,7 +2180,7 @@
               return;
             }
             if(action === 'contact'){
-              openContactLink();
+              openContactModal();
               return;
             }
             if(action === 'legal-terms'){
