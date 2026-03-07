@@ -11,7 +11,7 @@
       var DISTRICT_WEBSITE_URL = NABU_LOGO_LINK;
       var LEGAL_COMBINED_URL = 'https://berlin.nabu.de/impressum/02133.html';
       var SUBMIT_FORM_URL = 'https://berlin.nabu.de/wir-ueber-uns/bezirksgruppen/steglitz-zehlendorf/projekte/gebaeudebrueter/12400.html';
-      var TOPIC_INFO_URL = SUBMIT_FORM_URL;
+      var TOPIC_INFO_URL = 'https://berlin.nabu.de/stadt-und-natur/projekte-nabu-berlin/artenschutz-am-gebaeude/index.html';
       var BASEMAP_DEFAULT_ID = 'positron';
       var BASEMAP_QUERY_KEY = 'basemap';
       var BASEMAP_STORAGE_KEY = 'ms-basemap';
