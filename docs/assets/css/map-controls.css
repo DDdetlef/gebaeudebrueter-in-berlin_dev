@@ -460,6 +460,14 @@ body.ms-hide-attrib .leaflet-bottom.leaflet-left .leaflet-control-attribution a 
   --ms-sidebar-hover: rgb(184, 182, 165);
   --ms-sheet-top-bg: var(--nabu-blue);
   --ms-sheet-bottom-bg: var(--ms-sidebar-bg);
+  --ms-side-sheet-bg: #ffffff;
+  --ms-side-sheet-fg: #1f2937;
+  --ms-side-sheet-muted: #667085;
+  --ms-side-sheet-border: #e5e7eb;
+  --ms-side-sheet-hover: #f3f4f6;
+  --ms-side-sheet-pad-x: 18px;
+  --ms-side-sheet-pad-y: 14px;
+  --ms-side-logo-width: clamp(112px, 34vw, 128px);
   --ms-safe-bottom-extra: 0px;
   --ms-header-shadow: 0 2px 10px rgba(0,0,0,.08);
   --ms-nav-width: min(420px, 66vw);
@@ -577,86 +585,120 @@ body.ms-mobile-redesign .ms-control {
   height: calc(100dvh - var(--ms-header-height));
   width: var(--ms-nav-width);
   max-width: 420px;
-  background: var(--ms-sidebar-bg);
-  box-shadow: 8px 0 22px rgba(0,0,0,.22);
+  background: var(--ms-side-sheet-bg);
+  box-shadow: 8px 0 22px rgba(15, 23, 42, 0.18);
   transform: translateX(-100%);
   visibility: hidden;
   transition: transform .25s ease, visibility .25s ease;
   z-index: 10055;
   display: flex;
   flex-direction: column;
-  padding-top: 8px;
-  overflow-y: auto;
-  color: var(--ms-sidebar-fg);
+  padding-top: 0;
+  overflow: hidden;
+  color: var(--ms-side-sheet-fg);
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
 }
 .ms-side-sheet.is-open {
   transform: translateX(0);
   visibility: visible;
 }
 .ms-side-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--ms-sidebar-border);
-  color: var(--ms-sidebar-fg);
-  background: var(--ms-sidebar-bg);
+  gap: 12px;
+  padding: 0 var(--ms-side-sheet-pad-x);
+  border-bottom: 1px solid var(--ms-side-sheet-border);
+  color: var(--ms-side-sheet-fg);
+  background: var(--ms-side-sheet-bg);
+}
+.ms-side-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 0;
+  text-decoration: none;
 }
 .ms-side-nav {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px;
-  gap: 4px;
+  padding: var(--ms-side-sheet-pad-y) var(--ms-side-sheet-pad-x);
+  gap: 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  background: var(--ms-side-sheet-bg);
 }
 .ms-side-item {
   border: 0;
   background: transparent;
-  color: var(--ms-sidebar-fg);
+  color: var(--ms-side-sheet-fg);
   text-decoration: none;
   font: inherit;
-  font-size: 16px;
-  line-height: 1.4;
-  min-height: 44px;
-  border-radius: 10px;
-  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 11px 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
   text-align: left;
-  transition: background-color .14s ease;
+  transition: background-color .14s ease, color .14s ease;
+}
+.ms-side-item > span:last-child {
+  flex: 1 1 auto;
 }
 .ms-side-item:hover,
-.ms-side-item:active {
-  background: var(--ms-sidebar-hover);
+.ms-side-item:active,
+.ms-side-item:focus-visible {
+  background: var(--ms-side-sheet-hover);
+}
+.ms-side-item[aria-current="page"] {
+  background: #eef2f7;
+  font-weight: 500;
 }
 .ms-side-item:active {
-  filter: brightness(0.95);
+  filter: none;
 }
 .ms-side-footer {
   margin-top: auto;
-  padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px) + clamp(20px, 5vh, 52px));
+  padding: 12px var(--ms-side-sheet-pad-x) calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--ms-side-sheet-border);
+  background: var(--ms-side-sheet-bg);
 }
-.ms-side-logo-wrap {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.ms-side-footer-link,
+.ms-side-footer-link:link,
+.ms-side-footer-link:visited {
+  color: var(--ms-side-sheet-muted);
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+.ms-side-footer-link:hover,
+.ms-side-footer-link:focus-visible {
+  color: var(--ms-side-sheet-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .ms-side-logo {
   display: block;
-  width: min(100%, 120px);
-  max-width: 120px;
+  width: min(100%, var(--ms-side-logo-width));
+  max-width: var(--ms-side-logo-width);
   height: auto;
 }
 .ms-side-icon {
   width: 20px;
   display: inline-flex;
   justify-content: center;
+  color: var(--ms-side-sheet-muted);
 }
 .ms-side-icon svg {
   width: 20px;
@@ -667,19 +709,20 @@ body.ms-mobile-redesign .ms-control {
 .ms-side-sub {
   font-size: 14px;
   line-height: 1.4;
+  color: var(--ms-side-sheet-muted);
 }
 .ms-side-divider {
   height: 1px;
-  margin: 6px 8px;
-  background: var(--ms-sidebar-border);
+  margin: 8px 2px;
+  background: var(--ms-side-sheet-border);
 }
 .ms-side-section-label {
-  padding: 10px 12px 4px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ms-sidebar-muted);
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ms-side-sheet-muted);
   text-transform: uppercase;
-  letter-spacing: .03em;
+  letter-spacing: .05em;
 }
 
 .ms-fab-filter,
@@ -962,15 +1005,16 @@ body.ms-side-open {
   border-color: rgba(0,0,0,.18);
 }
 #ms-side-close {
-  border-radius: 999px;
-  background: var(--ms-sidebar-bg);
-  color: var(--ms-sidebar-fg);
-  border-color: var(--ms-sidebar-border);
+  margin-top: 8px;
+  border-radius: 12px;
+  background: var(--ms-side-sheet-bg);
+  color: var(--ms-side-sheet-fg);
+  border-color: var(--ms-side-sheet-border);
   box-shadow: none;
 }
 #ms-side-close:hover {
-  background: var(--ms-sidebar-hover);
-  border-color: var(--ms-sidebar-border);
+  background: var(--ms-side-sheet-hover);
+  border-color: #d0d5dd;
 }
 
 @media (prefers-reduced-motion: reduce) {
