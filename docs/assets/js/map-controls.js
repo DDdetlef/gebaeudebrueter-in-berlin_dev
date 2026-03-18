@@ -21,6 +21,9 @@
       var TOPPLUSOPEN_CAPABILITIES_URL = 'https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml';
       var TOPPLUSOPEN_DATA_YEAR_LOCK = '2024';
       var TOPPLUSOPEN_DATA_YEAR_FALLBACK = TOPPLUSOPEN_DATA_YEAR_LOCK;
+      var REPORT_REVERSE_GEOCODE_URL = 'https://nominatim.openstreetmap.org/reverse';
+      var REPORT_REVERSE_TIMEOUT_MS = 9000;
+      var REPORT_TOAST_DURATION_MS = 3600;
       var TOPPLUSOPEN_DATA_YEAR = String(window.__TOPPLUSOPEN_DATA_YEAR__ || window.__BKG_TOPPLUSOPEN_DATA_YEAR__ || window.__TOPPLUSOPEN_LAST_DATA_YEAR__ || document.documentElement.getAttribute('data-topplusopen-year') || '').trim() || TOPPLUSOPEN_DATA_YEAR_LOCK;
       var BKG_DATENQUELLEN_URL = 'https://sgx.geodatenzentrum.de/web_public/gdz/datenquellen/datenquellen_topplusopen.html';
       var DL_DE_BY_20_URL = 'https://www.govdata.de/dl-de/by-2-0';
@@ -46,7 +49,23 @@
         tileErrorCount: 0
       };
       // Cluster-aware filtering support (always AND across groups)
-      var MS = { map:null, cluster:null, markers:[], ready:false, userMarker:null, userAccuracyCircle:null, locationBound:false, locationToastTimer:null, locateControl:null, popupVisible:false, visibleMarkerCount:null };
+      var MS = {
+        map:null,
+        cluster:null,
+        markers:[],
+        ready:false,
+        userMarker:null,
+        userAccuracyCircle:null,
+        locationBound:false,
+        locationToastTimer:null,
+        locateControl:null,
+        popupVisible:false,
+        visibleMarkerCount:null,
+        reportModeActive:false,
+        reportMarker:null,
+        reportMarkerRequestToken:0,
+        reportToastTimer:null
+      };
       applyTopPlusOpenAttributionYear(TOPPLUSOPEN_DATA_YEAR);
       var MS_MOBILE_MEDIA = (window.matchMedia ? window.matchMedia('(max-width: ' + MOBILE_MAX_WIDTH + 'px)') : null);
       function isMobileView(){
@@ -124,6 +143,291 @@
         try{ href = submitCta ? (submitCta.getAttribute('href') || submitCta.href || '') : ''; }catch(e){ href = ''; }
         return href || SUBMIT_FORM_URL;
       }
+      function normalizeTextSpacing(value){
+        return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+      }
+      function escapeHtml(value){
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+      function buildSubmitFormUrlWithParams(params){
+        var targetUrl = getSubmitFormUrl();
+        var parsed = null;
+        try{ parsed = new URL(targetUrl, window.location.href); }catch(e){ return targetUrl; }
+        var payload = params || {};
+        Object.keys(payload).forEach(function(key){
+          var value = normalizeTextSpacing(payload[key]);
+          if(!value){ return; }
+          try{ parsed.searchParams.set(key, value); }catch(err){}
+        });
+        return parsed.toString();
+      }
+      function parseAddressLineToFields(addressLine){
+        var result = {
+          fundortstrasse: '',
+          fundorthausnummer: '',
+          fundortplz: '',
+          fundortort: ''
+        };
+        var raw = normalizeTextSpacing(addressLine);
+        if(!raw){ return result; }
+
+        var parts = raw.split(',');
+        var streetPart = normalizeTextSpacing(parts[0] || '');
+        var cityPart = normalizeTextSpacing(parts.slice(1).join(' '));
+
+        if(!cityPart){
+          var zipInline = streetPart.match(/\b(\d{5})\s+(.+)$/);
+          if(zipInline){
+            cityPart = normalizeTextSpacing(zipInline[1] + ' ' + zipInline[2]);
+            streetPart = normalizeTextSpacing(streetPart.slice(0, zipInline.index));
+          }
+        }
+
+        var houseMatch = streetPart.match(/(.+?)\s+([0-9]+[0-9A-Za-z\-\/]*)$/);
+        if(houseMatch){
+          result.fundortstrasse = normalizeTextSpacing(houseMatch[1]);
+          result.fundorthausnummer = normalizeTextSpacing(houseMatch[2]);
+        } else {
+          result.fundortstrasse = streetPart;
+        }
+
+        var cityMatch = cityPart.match(/\b(\d{5})\s+(.+)/);
+        if(cityMatch){
+          result.fundortplz = normalizeTextSpacing(cityMatch[1]);
+          result.fundortort = normalizeTextSpacing(cityMatch[2]);
+        } else if(cityPart){
+          result.fundortort = cityPart;
+        }
+        return result;
+      }
+      function getReportLinkOriginalHref(link){
+        if(!link){ return ''; }
+        var original = '';
+        try{ original = link.getAttribute('data-ms-original-href') || ''; }catch(e){ original = ''; }
+        if(!original){
+          try{ original = link.getAttribute('href') || link.href || ''; }catch(err){ original = ''; }
+        }
+        return String(original || '').trim();
+      }
+      function parseFundortIdFromOnclick(onclickValue){
+        var raw = String(onclickValue || '');
+        var match = raw.match(/gbHumanConfirmReport\s*\([^,]+,\s*['\"]?([0-9]+)['\"]?/i);
+        return match && match[1] ? match[1] : '';
+      }
+      function parseMailtoReportMetadata(href){
+        var result = {
+          fundortId: '',
+          addressLine: ''
+        };
+        var rawHref = String(href || '').trim();
+        if(!/^mailto:/i.test(rawHref)){ return result; }
+        var queryIndex = rawHref.indexOf('?');
+        if(queryIndex === -1){ return result; }
+        var query = rawHref.slice(queryIndex + 1);
+        var body = '';
+        var subject = '';
+        try{
+          var search = new URLSearchParams(query);
+          body = String(search.get('body') || '');
+          subject = String(search.get('subject') || '');
+        }catch(e){
+          body = '';
+          subject = '';
+        }
+        var payload = [body, subject].join('\n');
+        var idMatch = payload.match(/fundort-id\s*:\s*([0-9]+)/i);
+        if(idMatch && idMatch[1]){ result.fundortId = idMatch[1]; }
+        var addressMatch = payload.match(/adresse\s*:\s*(.+?)(?:\n|\r|\bfundort-id\b|\bdatum\s+der\s+beobachtung\b|$)/i);
+        if(addressMatch && addressMatch[1]){ result.addressLine = normalizeTextSpacing(addressMatch[1]); }
+        return result;
+      }
+      function parseExistingFormParamsFromHref(href){
+        var allowedKeys = ['fundort_id', 'fundortstrasse', 'fundorthausnummer', 'fundortplz', 'fundortort', 'fundortlat', 'fundortlng', 'fundortkoordinaten'];
+        var output = {};
+        var rawHref = String(href || '').trim();
+        if(!rawHref){ return output; }
+        var parsed = null;
+        try{ parsed = new URL(rawHref, window.location.href); }catch(e){ return output; }
+        allowedKeys.forEach(function(key){
+          var value = '';
+          try{ value = parsed.searchParams.get(key) || ''; }catch(err){ value = ''; }
+          value = normalizeTextSpacing(value);
+          if(value){ output[key] = value; }
+        });
+        return output;
+      }
+      function extractPopupAddressText(scope){
+        if(!scope || !scope.querySelectorAll){ return ''; }
+        var labels = scope.querySelectorAll('b');
+        for(var i=0; i<labels.length; i++){
+          var labelText = normalizeTextSpacing(labels[i].textContent || '').toLowerCase();
+          if(labelText.indexOf('adresse') === -1){ continue; }
+          var chunks = [];
+          var node = labels[i].nextSibling;
+          var breakCount = 0;
+          while(node){
+            if(node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === 'b'){ break; }
+            if(node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === 'br'){
+              breakCount += 1;
+              if(breakCount >= 2 && chunks.length){ break; }
+            } else {
+              breakCount = 0;
+              var text = normalizeTextSpacing(node.textContent || '');
+              if(text){ chunks.push(text); }
+            }
+            node = node.nextSibling;
+          }
+          var joined = normalizeTextSpacing(chunks.join(' '));
+          if(joined){ return joined; }
+        }
+        var fallback = normalizeTextSpacing(scope.textContent || '');
+        var fallbackMatch = fallback.match(/adresse\s*([^\n\r]+?)(?:\blink\s+zur\s+datenbank\b|\bbeobachtung\s+melden\b|$)/i);
+        return fallbackMatch && fallbackMatch[1] ? normalizeTextSpacing(fallbackMatch[1]) : '';
+      }
+      function extractFundortIdFromScope(scope){
+        if(!scope){ return ''; }
+        if(scope.querySelector){
+          var dbLink = scope.querySelector('a[href*="ID="], a[href*="id="]');
+          if(dbLink){
+            var rawHref = '';
+            try{ rawHref = dbLink.getAttribute('href') || dbLink.href || ''; }catch(e){ rawHref = ''; }
+            var idFromHref = '';
+            try{
+              var parsed = new URL(rawHref, window.location.href);
+              idFromHref = parsed.searchParams.get('ID') || parsed.searchParams.get('id') || '';
+            }catch(err){ idFromHref = ''; }
+            idFromHref = normalizeTextSpacing(idFromHref);
+            if(idFromHref){ return idFromHref; }
+            var idFromText = normalizeTextSpacing(dbLink.textContent || '').match(/([0-9]+)/);
+            if(idFromText && idFromText[1]){ return idFromText[1]; }
+          }
+        }
+        var text = normalizeTextSpacing(scope.textContent || '');
+        var idMatch = text.match(/fundort-id\s*([0-9]+)/i);
+        return idMatch && idMatch[1] ? idMatch[1] : '';
+      }
+      function cleanupReportParams(params){
+        var cleaned = {};
+        Object.keys(params || {}).forEach(function(key){
+          var value = normalizeTextSpacing(params[key]);
+          if(value){ cleaned[key] = value; }
+        });
+        return cleaned;
+      }
+      function extractReportContextFromLink(link, explicitExpectedId, explicitHref){
+        var context = {
+          fundort_id: '',
+          fundortstrasse: '',
+          fundorthausnummer: '',
+          fundortplz: '',
+          fundortort: ''
+        };
+        var sourceHref = normalizeTextSpacing(explicitHref || getReportLinkOriginalHref(link));
+        var fromForm = parseExistingFormParamsFromHref(sourceHref);
+        Object.keys(fromForm).forEach(function(key){ context[key] = fromForm[key]; });
+
+        var mailMeta = parseMailtoReportMetadata(sourceHref);
+        var expectedId = normalizeTextSpacing(explicitExpectedId);
+        if(!expectedId && link){
+          var onclickRaw = '';
+          try{ onclickRaw = link.getAttribute('onclick') || ''; }catch(e){ onclickRaw = ''; }
+          expectedId = parseFundortIdFromOnclick(onclickRaw);
+        }
+        if(!context.fundort_id){
+          context.fundort_id = expectedId || mailMeta.fundortId;
+        }
+
+        var scope = null;
+        if(link && link.closest){
+          scope = link.closest('.leaflet-popup-content, #ms-marker-modal-body, .ms-marker-modal-scroll, .leaflet-popup');
+        }
+        if(!context.fundort_id && scope){
+          context.fundort_id = extractFundortIdFromScope(scope);
+        }
+
+        var hasAddressValues = !!(context.fundortstrasse || context.fundorthausnummer || context.fundortplz || context.fundortort);
+        if(!hasAddressValues){
+          var addressLine = mailMeta.addressLine;
+          if(!addressLine && scope){ addressLine = extractPopupAddressText(scope); }
+          var parsedAddress = parseAddressLineToFields(addressLine);
+          context.fundortstrasse = context.fundortstrasse || parsedAddress.fundortstrasse;
+          context.fundorthausnummer = context.fundorthausnummer || parsedAddress.fundorthausnummer;
+          context.fundortplz = context.fundortplz || parsedAddress.fundortplz;
+          context.fundortort = context.fundortort || parsedAddress.fundortort;
+        }
+
+        return cleanupReportParams(context);
+      }
+      function openSubmitFormWithParams(params){
+        return openUrlInNewTabSecure(buildSubmitFormUrlWithParams(cleanupReportParams(params || {})));
+      }
+      function prepareSingleReportLink(link){
+        if(!link){ return; }
+        var originalHref = getReportLinkOriginalHref(link);
+        if(originalHref){
+          try{ link.setAttribute('data-ms-original-href', originalHref); }catch(e){}
+        }
+        var context = extractReportContextFromLink(link, null, originalHref);
+        var targetHref = buildSubmitFormUrlWithParams(context);
+        try{ link.setAttribute('href', targetHref); }catch(e){}
+        try{ link.removeAttribute('onclick'); }catch(err){}
+        try{ if(link.classList && !link.classList.contains('gb-report-link')){ link.classList.add('gb-report-link'); } }catch(listErr){}
+        try{ link.setAttribute('data-ms-report-ready', '1'); }catch(flagErr){}
+        hardenAnchorNewTab(link);
+      }
+      function prepareReportLinksInScope(scope){
+        if(!scope || !scope.querySelectorAll){ return; }
+        var reportLinks = scope.querySelectorAll('a.gb-report-link, a[onclick*="gbHumanConfirmReport"]');
+        if(!reportLinks || !reportLinks.length){ return; }
+        reportLinks.forEach(function(link){
+          var onclickRaw = '';
+          try{ onclickRaw = link.getAttribute('onclick') || ''; }catch(err){ onclickRaw = ''; }
+          var hasLegacyHandler = /gbHumanConfirmReport/i.test(onclickRaw);
+          if(link.classList && link.classList.contains('gb-report-link') || hasLegacyHandler){
+            prepareSingleReportLink(link);
+          }
+        });
+      }
+      function bindGlobalReportLinkInterception(){
+        if(document.__msReportLinkInterceptionBound){ return; }
+        document.__msReportLinkInterceptionBound = true;
+        document.addEventListener('click', function(ev){
+          var target = ev && ev.target && ev.target.closest ? ev.target.closest('a.gb-report-link, a[onclick*="gbHumanConfirmReport"]') : null;
+          if(!target){ return; }
+          if(typeof ev.button === 'number' && ev.button !== 0){ return; }
+          if(ev.preventDefault){ ev.preventDefault(); }
+          if(ev.stopImmediatePropagation){ ev.stopImmediatePropagation(); }
+          if(ev.stopPropagation){ ev.stopPropagation(); }
+          prepareSingleReportLink(target);
+          var context = extractReportContextFromLink(target);
+          openSubmitFormWithParams(context);
+        }, true);
+      }
+      function installLegacyReportCompatibility(){
+        try{
+          window.gbOpenReportForm = function(options){
+            var opts = options || {};
+            var context = extractReportContextFromLink(null, opts.expectedId || opts.fundortId || '', opts.sourceHref || opts.href || '');
+            return openSubmitFormWithParams(context);
+          };
+          window.gbHumanConfirmReport = function(evt, expectedId, href){
+            try{ if(evt && evt.preventDefault){ evt.preventDefault(); } }catch(e){}
+            var context = extractReportContextFromLink(null, expectedId, href);
+            openSubmitFormWithParams(context);
+            return false;
+          };
+          window.gbModalOpen = function(){ return false; };
+          window.gbModalClose = function(){ return false; };
+          window.gbModalConfirm = function(){ return false; };
+        }catch(e){}
+      }
+      bindGlobalReportLinkInterception();
+      installLegacyReportCompatibility();
       function openSubmitModalOrFallback(){
         if(isMobileView()){
           closeMobileTransientOverlays({ keepSubmitModal: true, forceShowControl: true });
@@ -164,6 +468,7 @@
           try{ href = link.getAttribute('href') || link.href || ''; }catch(e){ href = ''; }
           if(isDatabaseLinkHref(href)){ hardenAnchorNewTab(link); }
         });
+        prepareReportLinksInScope(scope);
       }
       function hasVisibleMapPopup(){
         if(MS && typeof MS.popupVisible === 'boolean'){ return MS.popupVisible; }
@@ -871,6 +1176,220 @@
           toast.style.transform = 'translate(-50%, 8px)';
         }, 3600);
       }
+      function showReportSelectionToast(message){
+        var text = normalizeTextSpacing(message || 'Bitte Standort in der Karte auswählen.');
+        if(isCompactViewport()){
+          showMobileLocationToast(text);
+          return;
+        }
+        var toast = document.getElementById('ms-report-toast');
+        if(!toast){
+          toast = document.createElement('div');
+          toast.id = 'ms-report-toast';
+          toast.setAttribute('role', 'status');
+          toast.setAttribute('aria-live', 'polite');
+          toast.style.position = 'fixed';
+          toast.style.left = '50%';
+          toast.style.top = '18px';
+          toast.style.transform = 'translate(-50%, -8px)';
+          toast.style.maxWidth = 'min(520px, calc(100vw - 32px))';
+          toast.style.padding = '10px 14px';
+          toast.style.borderRadius = '10px';
+          toast.style.background = 'rgba(15, 23, 42, 0.92)';
+          toast.style.color = '#fff';
+          toast.style.fontSize = '13px';
+          toast.style.lineHeight = '1.35';
+          toast.style.zIndex = '10030';
+          toast.style.boxShadow = '0 10px 24px rgba(0,0,0,0.24)';
+          toast.style.opacity = '0';
+          toast.style.transition = 'opacity .18s ease, transform .18s ease';
+          document.body.appendChild(toast);
+        }
+        toast.textContent = text;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translate(-50%, 0)';
+        if(MS.reportToastTimer){ clearTimeout(MS.reportToastTimer); }
+        MS.reportToastTimer = setTimeout(function(){
+          toast.style.opacity = '0';
+          toast.style.transform = 'translate(-50%, -8px)';
+        }, REPORT_TOAST_DURATION_MS);
+      }
+      function formatCoordinateValue(value){
+        var num = Number(value);
+        return isFinite(num) ? num.toFixed(6) : '';
+      }
+      function formatCoordinatePair(latlng){
+        var lat = formatCoordinateValue(latlng && latlng.lat);
+        var lng = formatCoordinateValue(latlng && latlng.lng);
+        return lat && lng ? (lat + ', ' + lng) : '';
+      }
+      function buildAddressLineFromFields(addressFields, fallback){
+        var street = normalizeTextSpacing((addressFields && addressFields.fundortstrasse) || '');
+        var house = normalizeTextSpacing((addressFields && addressFields.fundorthausnummer) || '');
+        var plz = normalizeTextSpacing((addressFields && addressFields.fundortplz) || '');
+        var city = normalizeTextSpacing((addressFields && addressFields.fundortort) || '');
+        var streetLine = normalizeTextSpacing(street + (house ? (' ' + house) : ''));
+        var cityLine = normalizeTextSpacing((plz ? (plz + ' ') : '') + city);
+        if(streetLine && cityLine){ return streetLine + ', ' + cityLine; }
+        if(streetLine){ return streetLine; }
+        if(cityLine){ return cityLine; }
+        return normalizeTextSpacing(fallback || 'Adresse konnte nicht automatisch ermittelt werden.');
+      }
+      function clearReportSelectionMarker(){
+        if(MS.map && MS.reportMarker){
+          try{ MS.map.removeLayer(MS.reportMarker); }catch(e){}
+        }
+        MS.reportMarker = null;
+      }
+      function normalizeReverseAddressPayload(rawData){
+        var address = rawData && rawData.address ? rawData.address : {};
+        return {
+          fundortstrasse: normalizeTextSpacing(address.road || address.pedestrian || address.footway || address.path || address.cycleway || address.residential || ''),
+          fundorthausnummer: normalizeTextSpacing(address.house_number || ''),
+          fundortplz: normalizeTextSpacing(address.postcode || ''),
+          fundortort: normalizeTextSpacing(address.city || address.town || address.village || address.hamlet || address.municipality || address.county || ''),
+          displayName: normalizeTextSpacing(rawData && rawData.display_name ? rawData.display_name : '')
+        };
+      }
+      function reverseGeocodeReportLocation(latlng, callback){
+        var done = typeof callback === 'function' ? callback : function(){};
+        var lat = Number(latlng && latlng.lat);
+        var lng = Number(latlng && latlng.lng);
+        if(!isFinite(lat) || !isFinite(lng) || typeof fetch !== 'function'){
+          done(null);
+          return;
+        }
+        var controller = (typeof AbortController === 'function') ? new AbortController() : null;
+        var timeoutId = null;
+        var finished = false;
+        function finish(payload){
+          if(finished){ return; }
+          finished = true;
+          if(timeoutId){ clearTimeout(timeoutId); }
+          done(payload || null);
+        }
+        timeoutId = setTimeout(function(){
+          try{ if(controller){ controller.abort(); } }catch(e){}
+          finish(null);
+        }, REPORT_REVERSE_TIMEOUT_MS);
+
+        var query = '?format=jsonv2&addressdetails=1&zoom=18&lat=' + encodeURIComponent(lat.toFixed(7)) + '&lon=' + encodeURIComponent(lng.toFixed(7));
+        var options = { method: 'GET', headers: { 'Accept': 'application/json' } };
+        if(controller){ options.signal = controller.signal; }
+
+        fetch(REPORT_REVERSE_GEOCODE_URL + query, options)
+          .then(function(response){
+            if(!response || !response.ok){ throw new Error('reverse geocode failed'); }
+            return response.json();
+          })
+          .then(function(payload){
+            finish(normalizeReverseAddressPayload(payload));
+          })
+          .catch(function(){
+            finish(null);
+          });
+      }
+      function buildReportSelectionParams(latlng, reverseAddress){
+        var params = {};
+        if(reverseAddress){
+          params.fundortstrasse = reverseAddress.fundortstrasse || '';
+          params.fundorthausnummer = reverseAddress.fundorthausnummer || '';
+          params.fundortplz = reverseAddress.fundortplz || '';
+          params.fundortort = reverseAddress.fundortort || '';
+        }
+        var lat = formatCoordinateValue(latlng && latlng.lat);
+        var lng = formatCoordinateValue(latlng && latlng.lng);
+        if(lat){ params.fundortlat = lat; }
+        if(lng){ params.fundortlng = lng; }
+        if(lat && lng){ params.fundortkoordinaten = lat + ', ' + lng; }
+        return cleanupReportParams(params);
+      }
+      function renderReportSelectionPopup(marker, latlng, params, addressLabel){
+        if(!marker){ return; }
+        var formUrl = buildSubmitFormUrlWithParams(params || {});
+        var coordinates = formatCoordinatePair(latlng);
+        var html = [
+          '<div class="ms-report-select-popup">',
+            '<strong>Neuer Fundort</strong><br/>',
+            '<span>' + escapeHtml(addressLabel || 'Adresse wird ermittelt...') + '</span><br/>',
+            '<small>Koordinaten: ' + escapeHtml(coordinates || 'nicht verfügbar') + '</small><br/><br/>',
+            '<a href="' + escapeHtml(formUrl) + '" class="gb-report-link" target="_blank" rel="noopener noreferrer">Standort auswählen</a>',
+          '</div>'
+        ].join('');
+
+        try{
+          if(marker.getPopup && marker.getPopup()){
+            marker.setPopupContent(html);
+          } else {
+            marker.bindPopup(html, { maxWidth: 360, closeOnClick: false, autoClose: false });
+          }
+          marker._msPopup = marker.getPopup ? marker.getPopup() : null;
+          marker.openPopup();
+        }catch(e){}
+      }
+      function ensureReportSelectionMarker(latlng){
+        clearReportSelectionMarker();
+        if(!MS.map || !latlng){ return null; }
+        try{
+          MS.reportMarker = L.circleMarker(latlng, {
+            radius: 10,
+            color: '#1976d2',
+            weight: 3,
+            fillColor: '#ffffff',
+            fillOpacity: 0.95,
+            bubblingMouseEvents: false
+          }).addTo(MS.map);
+        }catch(e){
+          MS.reportMarker = null;
+        }
+        return MS.reportMarker;
+      }
+      function chooseReportSelectionLocation(latlng){
+        var marker = ensureReportSelectionMarker(latlng);
+        if(!marker){
+          openSubmitModalOrFallback();
+          return;
+        }
+        var token = ++MS.reportMarkerRequestToken;
+        var initialParams = buildReportSelectionParams(latlng, null);
+        renderReportSelectionPopup(marker, latlng, initialParams, 'Adresse wird ermittelt...');
+
+        reverseGeocodeReportLocation(latlng, function(reverseAddress){
+          if(token !== MS.reportMarkerRequestToken){ return; }
+          var params = buildReportSelectionParams(latlng, reverseAddress || null);
+          var addressLabel = buildAddressLineFromFields(params, reverseAddress && reverseAddress.displayName ? reverseAddress.displayName : 'Adresse konnte nicht automatisch ermittelt werden.');
+          renderReportSelectionPopup(marker, latlng, params, addressLabel);
+          if(isMobile){
+            try{ openMarkerDetailsModalFromMarker(marker); }catch(e){}
+          }
+          if(!reverseAddress){
+            showReportSelectionToast('Adresse konnte nicht automatisch ermittelt werden. Standort kann trotzdem gemeldet werden.');
+          }
+        });
+      }
+      function startReportLocationSelection(){
+        if(!MS.map){
+          return openSubmitModalOrFallback();
+        }
+        closeMobileTransientOverlays({ forceShowControl: true });
+        closeAnyOpenMarkerOverlay();
+        clearReportSelectionMarker();
+        MS.reportModeActive = true;
+        MS.reportMarkerRequestToken += 1;
+        showReportSelectionToast('Bitte in die Karte klicken oder tippen, um den neuen Fundort auszuwählen.');
+        return true;
+      }
+      function handleReportSelectionMapClick(ev){
+        if(!MS.reportModeActive){ return false; }
+        if(!ev || !ev.latlng){ return false; }
+        var target = ev && ev.originalEvent ? ev.originalEvent.target : null;
+        if(target && target.closest && target.closest('.leaflet-popup, .leaflet-control, .ms-modal, #ms-control, #ms-mobile-root')){
+          return false;
+        }
+        MS.reportModeActive = false;
+        chooseReportSelectionLocation(ev.latlng);
+        return true;
+      }
       function ensureLocationBindings(){
         if(!MS.map || MS.locationBound){ return; }
         MS.locationBound = true;
@@ -1009,7 +1528,7 @@
         if(modal){ modal.addEventListener('click', function(ev){ if(ev.target === modal){ closeModal(); } }); }
       })();
 
-      // Submit modal handlers (open submit modal from control button)
+      // Submit handlers (start map-based location selection from control button)
       (function(){
         var submitBtn = document.getElementById('ms-submit-btn');
         var submitModal = document.getElementById('ms-submit-modal');
@@ -1020,7 +1539,11 @@
         function openSubmit(ev){
           if(ev){ ev.preventDefault(); }
           if(sheet){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
-          openSubmitModalOrFallback();
+          if(typeof startReportLocationSelection === 'function'){
+            startReportLocationSelection();
+          } else {
+            openSubmitModalOrFallback();
+          }
         }
         function closeSubmit(){ if(submitModal){ submitModal.classList.add('ms-hidden'); } syncHeaderLayeringOverModals(); syncMobileControlVisibility(); }
         if(submitBtn){ submitBtn.addEventListener('click', openSubmit); }
@@ -1851,8 +2374,13 @@
         }
 
         function openSubmitModalFromMobile(){
-          closeMobileTransientOverlays({ keepSubmitModal: true, forceShowControl: true });
-          openSubmitModalOrFallback();
+          if(typeof startReportLocationSelection === 'function'){
+            closeMobileTransientOverlays({ forceShowControl: true });
+            startReportLocationSelection();
+          } else {
+            closeMobileTransientOverlays({ keepSubmitModal: true, forceShowControl: true });
+            openSubmitModalOrFallback();
+          }
         }
 
         function closeBottomSheet(){
@@ -2436,6 +2964,7 @@
           });
           MS.map.on('popupclose', function(){ MS.popupVisible = false; setTimeout(syncMobileControlVisibility, 0); });
           MS.map.on('click', function(ev){
+            if(handleReportSelectionMapClick(ev)){ return; }
             try{
               var target = ev && ev.originalEvent ? ev.originalEvent.target : null;
               if(!target){ return; }

@@ -1,0 +1,30 @@
+name: E2E Report Flow
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  report-flow:
+    name: Desktop and Mobile Report Flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E report flow
+        run: npm run e2e:report-flow
