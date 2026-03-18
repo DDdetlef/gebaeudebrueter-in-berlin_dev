@@ -1,0 +1,17 @@
+{
+  "name": "gebaeudebrueter-in-berlin-dev-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E checks for the report flow in Gebaeudebrueter in Berlin",
+  "scripts": {
+    "e2e:report-flow": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --workers=1",
+    "e2e:report-flow:headed": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --headed --workers=1",
+    "e2e:report-flow:debug": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --debug --workers=1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

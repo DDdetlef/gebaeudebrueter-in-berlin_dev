@@ -21,3 +21,8 @@ out/
 /GebaeudebrueterBerlinBySpecies.html
 /GebaeudebrueterMeldungen.html
 /GebaeudebrueterMultiMarkers.html
+
+# Node/E2E artifacts
+node_modules/
+test-results/
+playwright-report/
