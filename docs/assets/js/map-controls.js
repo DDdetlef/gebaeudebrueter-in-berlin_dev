@@ -18,7 +18,7 @@
       var TOPPLUSOPEN_TIMEOUT_MS = 15000;
       var TOPPLUSOPEN_MAX_TILE_ERRORS = 8;
       var TOPPLUSOPEN_MAX_ZOOM = 18;
-      var TOPPLUSOPEN_WMS_URL = 'https://sgx.geodatenzentrum.de/wms_topplus_open?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=web,web_grau&STYLES=,&CRS=EPSG:3857&FORMAT=image/png&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}';
+      var TOPPLUSOPEN_WMS_URL = 'https://sgx.geodatenzentrum.de/wms_topplus_open?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=web&STYLES=&CRS=EPSG:3857&FORMAT=image/png&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}';
       var TOPPLUSOPEN_CAPABILITIES_URL = 'https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml';
       var TOPPLUSOPEN_DATA_YEAR_LOCK = '2024';
       var TOPPLUSOPEN_DATA_YEAR_FALLBACK = TOPPLUSOPEN_DATA_YEAR_LOCK;
