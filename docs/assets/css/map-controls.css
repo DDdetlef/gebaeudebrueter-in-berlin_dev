@@ -783,6 +783,79 @@ body.ms-mobile-redesign .ms-control {
   cursor: pointer;
   touch-action: manipulation;
 }
+.leaflet-control.ms-desktop-layer-control {
+  margin-bottom: 22px;
+  position: relative;
+}
+.leaflet-control.ms-desktop-layer-control a {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--ms-fab-bg);
+  color: var(--ms-fab-color);
+  box-shadow: var(--ms-fab-shadow);
+}
+.leaflet-control.ms-desktop-layer-control a:hover {
+  filter: brightness(1.05);
+}
+.leaflet-control.ms-desktop-layer-control a:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.95);
+  outline-offset: 2px;
+}
+.leaflet-control.ms-desktop-layer-control a.is-topplusopen {
+  background: #0f5f4f;
+}
+.leaflet-control.ms-desktop-layer-control a.is-open {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.92), var(--ms-fab-shadow);
+}
+.leaflet-control.ms-desktop-layer-control svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.ms-desktop-layer-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  min-width: 192px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.16);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10070;
+}
+.ms-desktop-layer-menu.is-open {
+  display: flex;
+}
+.ms-desktop-layer-option {
+  width: 100%;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 9px;
+  background: #fff;
+  color: #1f1f1f;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.ms-desktop-layer-option:hover {
+  background: #f4f7fb;
+}
+.ms-desktop-layer-option:focus-visible {
+  outline: 2px solid var(--ms-focus);
+  outline-offset: 1px;
+}
+.ms-desktop-layer-option.is-active {
+  border-color: #0f5f4f;
+  background: rgba(15,95,79,0.1);
+}
 .ms-fab-filter svg,
 .ms-fab-locate svg,
 .ms-fab-layer svg {
@@ -1020,6 +1093,9 @@ body.ms-side-open {
   .leaflet-control-locate,
   .leaflet-control a[title*="Standort"],
   .leaflet-control a[aria-label*="Standort"] {
+    display: none !important;
+  }
+  .leaflet-control.ms-desktop-layer-control {
     display: none !important;
   }
 }

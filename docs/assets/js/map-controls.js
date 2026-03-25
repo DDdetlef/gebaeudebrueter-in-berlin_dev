@@ -18,6 +18,7 @@
       var TOPPLUSOPEN_TIMEOUT_MS = 15000;
       var TOPPLUSOPEN_MAX_TILE_ERRORS = 8;
       var TOPPLUSOPEN_MAX_ZOOM = 18;
+      var TOPPLUSOPEN_WMS_URL = 'https://sgx.geodatenzentrum.de/wms_topplus_open?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=web,web_grau&CRS=EPSG:3857&FORMAT=image/png&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}';
       var TOPPLUSOPEN_CAPABILITIES_URL = 'https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml';
       var TOPPLUSOPEN_DATA_YEAR_LOCK = '2024';
       var TOPPLUSOPEN_DATA_YEAR_FALLBACK = TOPPLUSOPEN_DATA_YEAR_LOCK;
@@ -64,7 +65,14 @@
         reportModeActive:false,
         reportMarker:null,
         reportMarkerRequestToken:0,
-        reportToastTimer:null
+        reportToastTimer:null,
+        desktopLayerControl:null,
+        desktopLayerButton:null,
+        desktopLayerMenu:null,
+        desktopLayerMenuOptions:null,
+        desktopLayerMenuOpen:false,
+        desktopLayerMenuOutsideHandler:null,
+        desktopLayerMenuKeyHandler:null
       };
       applyTopPlusOpenAttributionYear(TOPPLUSOPEN_DATA_YEAR);
       var MS_MOBILE_MEDIA = (window.matchMedia ? window.matchMedia('(max-width: ' + MOBILE_MAX_WIDTH + 'px)') : null);
@@ -853,13 +861,21 @@
       function createBasemapLayer(id){
         if(!window.L || typeof L.tileLayer !== 'function'){ return null; }
         if(id === 'topplusopen'){
-          return L.tileLayer('https://sgx.geodatenzentrum.de/wmts_topplus_open/tile/1.0.0/web/default/WEBMERCATOR/{z}/{y}/{x}.png', {
+          var TopPlusOpenWmsLayer = L.TileLayer.extend({
+            getTileUrl: function(coords){
+              var tileBounds = this._tileCoordsToBounds(coords);
+              var northWest = this._map.options.crs.project(tileBounds.getNorthWest());
+              var southEast = this._map.options.crs.project(tileBounds.getSouthEast());
+              var bbox = [northWest.x, southEast.y, southEast.x, northWest.y].join(',');
+              return this._url.replace('{bbox-epsg-3857}', bbox);
+            }
+          });
+          return new TopPlusOpenWmsLayer(TOPPLUSOPEN_WMS_URL, {
             minZoom: 0,
             maxZoom: TOPPLUSOPEN_MAX_ZOOM,
             maxNativeZoom: TOPPLUSOPEN_MAX_ZOOM,
             attribution: '',
-            detectRetina: false,
-            noWrap: true
+            detectRetina: false
           });
         }
         return L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -934,6 +950,7 @@
         if(sameIdActive && !opts.forceRecreate){
           syncMapMaxZoomForBasemap(normalized);
           syncBasemapAttribution(normalized);
+          updateDesktopLayerFabState();
           if(opts.updateUrl){ updateBasemapUrlParam(normalized); }
           if(opts.persist){ persistBasemapToStorage(normalized); }
           return true;
@@ -955,6 +972,7 @@
         }
         if(opts.updateUrl){ updateBasemapUrlParam(normalized); }
         if(opts.persist){ persistBasemapToStorage(normalized); }
+        updateDesktopLayerFabState();
         return true;
       }
       function initBasemapRuntime(){
@@ -1422,6 +1440,178 @@
           });
         }catch(e){}
       }
+      function updateDesktopLayerFabState(){
+        var button = MS.desktopLayerButton;
+        var menu = MS.desktopLayerMenu;
+        var activeId = normalizeBasemapId(BASEMAP_STATE.activeId) || BASEMAP_DEFAULT_ID;
+        var isTopPlusOpen = activeId === 'topplusopen';
+        if(button){
+          var title = 'Basiskarte auswahlen';
+          button.title = title;
+          button.setAttribute('aria-label', title);
+          button.setAttribute('aria-expanded', MS.desktopLayerMenuOpen ? 'true' : 'false');
+          button.classList.toggle('is-topplusopen', isTopPlusOpen);
+          button.classList.toggle('is-open', !!MS.desktopLayerMenuOpen);
+        }
+        if(menu){
+          menu.classList.toggle('is-open', !!MS.desktopLayerMenuOpen);
+          menu.setAttribute('aria-hidden', MS.desktopLayerMenuOpen ? 'false' : 'true');
+        }
+        if(MS.desktopLayerMenuOptions){
+          if(MS.desktopLayerMenuOptions.positron){
+            MS.desktopLayerMenuOptions.positron.classList.toggle('is-active', activeId === 'positron');
+            MS.desktopLayerMenuOptions.positron.setAttribute('aria-pressed', activeId === 'positron' ? 'true' : 'false');
+          }
+          if(MS.desktopLayerMenuOptions.topplusopen){
+            MS.desktopLayerMenuOptions.topplusopen.classList.toggle('is-active', activeId === 'topplusopen');
+            MS.desktopLayerMenuOptions.topplusopen.setAttribute('aria-pressed', activeId === 'topplusopen' ? 'true' : 'false');
+          }
+        }
+      }
+      function closeDesktopLayerFabMenu(){
+        if(!MS.desktopLayerMenuOpen){ return; }
+        MS.desktopLayerMenuOpen = false;
+        updateDesktopLayerFabState();
+      }
+      function openDesktopLayerFabMenu(){
+        if(MS.desktopLayerMenuOpen){ return; }
+        MS.desktopLayerMenuOpen = true;
+        updateDesktopLayerFabState();
+      }
+      function toggleDesktopLayerFabMenu(){
+        if(MS.desktopLayerMenuOpen){
+          closeDesktopLayerFabMenu();
+          return;
+        }
+        openDesktopLayerFabMenu();
+      }
+      function bindDesktopLayerFabGlobalCloseHandlers(){
+        if(MS.desktopLayerMenuOutsideHandler || MS.desktopLayerMenuKeyHandler){ return; }
+        MS.desktopLayerMenuOutsideHandler = function(ev){
+          if(!MS.desktopLayerMenuOpen || !MS.desktopLayerControl){ return; }
+          var container = MS.desktopLayerControl.getContainer && MS.desktopLayerControl.getContainer();
+          if(!container){ return; }
+          var target = ev && ev.target;
+          if(target && container.contains(target)){ return; }
+          closeDesktopLayerFabMenu();
+        };
+        MS.desktopLayerMenuKeyHandler = function(ev){
+          var key = ev && (ev.key || ev.code);
+          if(!MS.desktopLayerMenuOpen){ return; }
+          if(key === 'Escape' || key === 'Esc'){
+            closeDesktopLayerFabMenu();
+          }
+        };
+        document.addEventListener('mousedown', MS.desktopLayerMenuOutsideHandler, true);
+        document.addEventListener('touchstart', MS.desktopLayerMenuOutsideHandler, true);
+        document.addEventListener('keydown', MS.desktopLayerMenuKeyHandler, true);
+      }
+      function unbindDesktopLayerFabGlobalCloseHandlers(){
+        if(MS.desktopLayerMenuOutsideHandler){
+          document.removeEventListener('mousedown', MS.desktopLayerMenuOutsideHandler, true);
+          document.removeEventListener('touchstart', MS.desktopLayerMenuOutsideHandler, true);
+        }
+        if(MS.desktopLayerMenuKeyHandler){
+          document.removeEventListener('keydown', MS.desktopLayerMenuKeyHandler, true);
+        }
+        MS.desktopLayerMenuOutsideHandler = null;
+        MS.desktopLayerMenuKeyHandler = null;
+      }
+      function applyDesktopBasemapSelection(selectedId){
+        var normalized = normalizeBasemapId(selectedId) || BASEMAP_DEFAULT_ID;
+        var switched = applyBasemapById(normalized, { updateUrl: true, persist: true });
+        if(!switched && normalized === 'topplusopen'){
+          showBasemapWarning('TopPlusOpen derzeit nicht erreichbar - bleibe auf Positron.');
+          applyBasemapById('positron', { updateUrl: true, persist: true });
+        }
+        closeDesktopLayerFabMenu();
+      }
+      function removeDesktopLayerFabControl(){
+        closeDesktopLayerFabMenu();
+        unbindDesktopLayerFabGlobalCloseHandlers();
+        if(!MS.map || !MS.desktopLayerControl || typeof MS.map.removeControl !== 'function'){
+          MS.desktopLayerControl = null;
+          MS.desktopLayerButton = null;
+          MS.desktopLayerMenu = null;
+          MS.desktopLayerMenuOptions = null;
+          return;
+        }
+        try{ MS.map.removeControl(MS.desktopLayerControl); }catch(e){}
+        MS.desktopLayerControl = null;
+        MS.desktopLayerButton = null;
+        MS.desktopLayerMenu = null;
+        MS.desktopLayerMenuOptions = null;
+      }
+      function addDesktopLayerFabControl(){
+        if(isMobileView()){
+          removeDesktopLayerFabControl();
+          return;
+        }
+        if(!MS.map || MS.desktopLayerControl || !window.L || typeof L.Control !== 'function'){ return; }
+        var LayerFabControl = L.Control.extend({
+          options: { position: 'bottomright' },
+          onAdd: function(){
+            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control ms-desktop-layer-control');
+            var button = L.DomUtil.create('a', '', container);
+            var menu = L.DomUtil.create('div', 'ms-desktop-layer-menu', container);
+            var optionPositron = L.DomUtil.create('button', 'ms-desktop-layer-option', menu);
+            var optionTopplus = L.DomUtil.create('button', 'ms-desktop-layer-option', menu);
+            button.href = '#';
+            button.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 1 7l11 5 9-4.09V16h2V7L12 2zm0 12L4.2 10.45 2 11.45l10 4.55 10-4.55-2.2-1L12 14zm0 4L4.2 14.45 2 15.45 12 20l10-4.55-2.2-1L12 18z"></path></svg>';
+            button.style.width = '38px';
+            button.style.height = '38px';
+            button.style.display = 'flex';
+            button.style.alignItems = 'center';
+            button.style.justifyContent = 'center';
+            button.style.textDecoration = 'none';
+            button.style.borderBottom = 'none';
+            button.setAttribute('aria-haspopup', 'menu');
+            button.setAttribute('aria-expanded', 'false');
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-hidden', 'true');
+            optionPositron.type = 'button';
+            optionPositron.setAttribute('role', 'menuitemradio');
+            optionPositron.setAttribute('data-basemap-id', 'positron');
+            optionPositron.textContent = 'Positron (CARTO)';
+            optionTopplus.type = 'button';
+            optionTopplus.setAttribute('role', 'menuitemradio');
+            optionTopplus.setAttribute('data-basemap-id', 'topplusopen');
+            optionTopplus.textContent = 'TopPlusOpen (BKG)';
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.on(button, 'click', function(ev){
+              L.DomEvent.stop(ev);
+              toggleDesktopLayerFabMenu();
+            });
+            L.DomEvent.on(optionPositron, 'click', function(ev){
+              L.DomEvent.stop(ev);
+              applyDesktopBasemapSelection('positron');
+            });
+            L.DomEvent.on(optionTopplus, 'click', function(ev){
+              L.DomEvent.stop(ev);
+              applyDesktopBasemapSelection('topplusopen');
+            });
+            MS.desktopLayerButton = button;
+            MS.desktopLayerMenu = menu;
+            MS.desktopLayerMenuOptions = {
+              positron: optionPositron,
+              topplusopen: optionTopplus
+            };
+            MS.desktopLayerMenuOpen = false;
+            bindDesktopLayerFabGlobalCloseHandlers();
+            updateDesktopLayerFabState();
+            return container;
+          }
+        });
+        MS.desktopLayerControl = new LayerFabControl();
+        MS.map.addControl(MS.desktopLayerControl);
+        try{
+          var layerEl = MS.desktopLayerControl.getContainer && MS.desktopLayerControl.getContainer();
+          var locateEl = MS.locateControl && MS.locateControl.getContainer && MS.locateControl.getContainer();
+          if(layerEl && locateEl && layerEl.parentNode && layerEl.parentNode === locateEl.parentNode){
+            layerEl.parentNode.insertBefore(layerEl, locateEl);
+          }
+        }catch(e){}
+      }
       function addLocateMapControl(){
         if(isMobileView()){
           if(MS.map && MS.locateControl && typeof MS.map.removeControl === 'function'){
@@ -1466,6 +1656,7 @@
             locateEl.parentNode.insertBefore(locateEl, zoomEl);
           }
         }catch(e){}
+        addDesktopLayerFabControl();
       }
       function removeNativeMapControlsOnMobile(){
         if(!MS.map || !isMobileView()){ return; }
@@ -2820,6 +3011,7 @@
         }
 
         function teardownDesktop(){
+          removeDesktopLayerFabControl();
           if(MS.map && MS.locateControl && typeof MS.map.removeControl === 'function'){
             try{ MS.map.removeControl(MS.locateControl); }catch(e){}
           }
