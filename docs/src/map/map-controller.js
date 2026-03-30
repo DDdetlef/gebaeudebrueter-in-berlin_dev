@@ -1,18 +1,29 @@
-import { INITIAL_VIEW, TILE_ATTRIBUTION, TILE_URL } from '../shared/constants.js';
+import { BASEMAPS, INITIAL_VIEW } from '../shared/constants.js';
 
 export function createMapController() {
   let map = null;
+  let baseLayers = {};
 
   function init(containerId = 'map') {
     map = L.map(containerId, {
       zoomControl: true,
-      closePopupOnClick: false,
+      closePopupOnClick: true,
+      attributionControl: false,
     }).setView(INITIAL_VIEW.center, INITIAL_VIEW.zoom);
 
-    L.tileLayer(TILE_URL, {
-      attribution: TILE_ATTRIBUTION,
-      maxZoom: 20,
-    }).addTo(map);
+    L.control
+      .attribution({
+        position: 'bottomleft',
+        prefix: false,
+      })
+      .addTo(map);
+
+    baseLayers = {
+      [BASEMAPS.positron.label]: L.tileLayer(BASEMAPS.positron.url, BASEMAPS.positron.options),
+      [BASEMAPS.topPlusOpen.label]: L.tileLayer(BASEMAPS.topPlusOpen.url, BASEMAPS.topPlusOpen.options),
+    };
+
+    baseLayers[BASEMAPS.positron.label].addTo(map);
 
     return map;
   }
@@ -24,5 +35,6 @@ export function createMapController() {
   return {
     init,
     getMap,
+    getBaseLayers: () => ({ ...baseLayers }),
   };
 }

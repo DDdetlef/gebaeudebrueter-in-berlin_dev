@@ -18,9 +18,10 @@
   <div id="app" class="app-shell">
     <header class="topbar" data-role="topbar">
       <button type="button" class="icon-btn" data-action="toggle-nav" aria-label="Navigation öffnen">☰</button>
-      <h1 class="topbar-title">Gebäudebrüter in Berlin</h1>
-      <button type="button" class="icon-btn" data-action="open-filter" aria-label="Filter öffnen">⚙</button>
+      <h1 class="topbar-title"><span class="topbar-title-main">Gebäudebrüter in Berlin</span><span class="topbar-title-meta" data-role="data-generated-at"></span></h1>
+      <button type="button" class="icon-btn" data-action="report-site" aria-label="Nistplatz melden">+</button>
     </header>
+    <div class="mode-indicator" data-role="mode-indicator">Modus: Gemeldete Fundorte</div>
 
     <main class="map-region" aria-label="Kartenbereich">
       <div id="map" class="map-canvas" role="region" aria-label="Karte"></div>
@@ -33,7 +34,9 @@
       </div>
       <nav>
         <button type="button" class="list-item" data-action="open-filter">Filter</button>
-        <button type="button" class="list-item" data-action="share-map">Standort teilen</button>
+        <button type="button" class="list-item" data-action="mode-normal" data-mode-button="normal">Modus: Gemeldete Fundorte</button>
+        <button type="button" class="list-item" data-action="mode-schulsanierung" data-mode-button="schulsanierung">Modus: Projekt Schulsanierung</button>
+        <button type="button" class="list-item" data-action="report-site">Nistplatz melden (per Kartenklick)</button>
       </nav>
     </aside>
     <div class="backdrop" data-role="nav-backdrop" aria-hidden="true"></div>
@@ -49,14 +52,6 @@
         <button type="button" class="btn btn-primary" data-action="apply-filter">Anwenden</button>
       </footer>
     </section>
-
-    <div class="modal" data-role="marker-modal" aria-hidden="true">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Standortdetails">
-        <button type="button" class="icon-btn modal-close" data-action="close-marker-modal" aria-label="Details schließen">✕</button>
-        <div class="modal-content" data-role="marker-modal-content"></div>
-      </div>
-    </div>
-
     <button type="button" class="fab" data-action="locate" aria-label="Standort finden">◎</button>
   </div>
 

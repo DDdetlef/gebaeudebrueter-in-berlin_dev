@@ -1,0 +1,134 @@
+{
+  "ok": true,
+  "summary": {
+    "csvRows": 454,
+    "schulenRows": 454,
+    "metadataCountSchulen": 454,
+    "heuristicCsvMatches": 454
+  },
+  "checks": {
+    "outsideBerlin": 0,
+    "invalidCoords": 0,
+    "wrongDefaults": 0,
+    "missingSchoolId": 0,
+    "duplicateSchoolId": 13,
+    "csvRowsWithoutMarker": 0,
+    "csvRowsWithMultipleMarkers": 0
+  },
+  "samples": {
+    "outsideBerlin": [],
+    "invalidCoords": [],
+    "wrongDefaults": [],
+    "duplicateSchoolId": [
+      {
+        "schoolId": "04K07",
+        "rows": 2,
+        "names": [
+          "Integrierte Sekundarschule Wilmersdorf",
+          "Integrierte Sekundarschule Wilmersdorf\nISS Wilmersdorf"
+        ]
+      },
+      {
+        "schoolId": "02G02",
+        "rows": 2,
+        "names": [
+          "Hausburg Grundschule",
+          "Hausburg-Grundschule"
+        ]
+      },
+      {
+        "schoolId": "02K08",
+        "rows": 2,
+        "names": [
+          "Refik-Veseli-Schule"
+        ]
+      },
+      {
+        "schoolId": "02K04",
+        "rows": 2,
+        "names": [
+          "Lenau-Grundschule\nBergmannkiez-Gemeinschaftsschule",
+          "Lina-Morgenstern-Schule"
+        ]
+      },
+      {
+        "schoolId": "/",
+        "rows": 7,
+        "names": [
+          "Sporthalle Saefkow Platz",
+          "Sporthalle Rudolf-Seiffert-Str.",
+          "Reaktivierung ISS Paul Junius Str. 25-27",
+          "Sporthalle Hagenstraße",
+          "Welse-Sporthalle",
+          "Haus des Sports\nSportstätte, keine Schule",
+          "30. Grundschule\nexistiert online nicht"
+        ]
+      },
+      {
+        "schoolId": "11K01",
+        "rows": 2,
+        "names": [
+          "Alexander-Puschkin-Schule",
+          "Sporthalle Franz-Mett-Straße\ns. Alexander-Puschkin-Schule"
+        ]
+      },
+      {
+        "schoolId": "11K10",
+        "rows": 2,
+        "names": [
+          "Grüner Campus Malchow; Malchower Chaussee 2",
+          "Grüner Campus Malchow; Doberaner Str. 58"
+        ]
+      },
+      {
+        "schoolId": "11Kn11",
+        "rows": 2,
+        "names": [
+          "Sporthalle Klüter Str. 36, Klüter Str. 42\nGemeinschaftsschule Klützer Straße",
+          "Gemeinschaftsschule Klützer Straße"
+        ]
+      },
+      {
+        "schoolId": "11S06",
+        "rows": 2,
+        "names": [
+          "Selma-Lagerlöf-Grundschule",
+          "Selma-Lagerlöf-Schule / 33. Grundschule"
+        ]
+      },
+      {
+        "schoolId": "11Y11",
+        "rows": 2,
+        "names": [
+          "Immanuel-Kant-Gymnasium"
+        ]
+      },
+      {
+        "schoolId": "03G36",
+        "rows": 2,
+        "names": [
+          "Reaktivierung Grundschule Buchholzer Str. 3 (früher Hans-Fallada-Schule)\nUmzug der Elisabeth-Christinen-Grundschule",
+          "Elisabeth-Christinen-Grundschule\ns. Reaktivierung Grundschule Buchholzer Str. 3"
+        ]
+      },
+      {
+        "schoolId": "03Y17",
+        "rows": 2,
+        "names": [
+          "Gymnasium am Europasportpark\nehem. Goubertin-Gynmasium\nUmzug und neuer Name: Inge-Deutschkron-Gymnasium",
+          "Inge-Deutschkron-Gymnasium"
+        ]
+      },
+      {
+        "schoolId": "05G01",
+        "rows": 2,
+        "names": [
+          "Ernst-Ludwig-Hem-Grundschule",
+          "Ernst-Ludwig-Heim-Grundschule"
+        ]
+      }
+    ],
+    "csvRowsWithoutMarker": [],
+    "csvRowsWithMultipleMarkers": []
+  }
+}

@@ -6,7 +6,9 @@
   "scripts": {
     "e2e:report-flow": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --workers=1",
     "e2e:report-flow:headed": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --headed --workers=1",
-    "e2e:report-flow:debug": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --debug --workers=1"
+    "e2e:report-flow:debug": "playwright test scripts/e2e-report-flow.spec.js --browser=chromium --debug --workers=1",
+    "qa:school-json": "node scripts/qa-school-json-check.js",
+    "qa:marker-duplicates": "node scripts/analyze-marker-duplicates.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2"

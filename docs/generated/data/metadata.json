@@ -1,0 +1,21 @@
+{
+  "datasetVersion": "2026.03.30+build.local",
+  "generatedAt": "2026-03-30T10:38:59.076221Z",
+  "sourceCommit": "d08360b",
+  "counts": {
+    "fundorte": 2425,
+    "schulen": 454,
+    "total": 2879
+  },
+  "bbox": {
+    "minLat": 52.3918151,
+    "maxLat": 52.6377447,
+    "minLon": 13.1452532,
+    "maxLon": 13.667232
+  },
+  "qa": {
+    "passed": false,
+    "errors": 0,
+    "warnings": 0
+  }
+}

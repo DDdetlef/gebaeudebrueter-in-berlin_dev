@@ -1,0 +1,1792 @@
+{
+  "csv": {
+    "rows": 454,
+    "uniqueSchulnummer": 436,
+    "duplicateSchulnummerEntries": 13,
+    "duplicateSchulnummerSamples": [
+      {
+        "schulnummer": "04K07",
+        "rows": 2,
+        "variants": [
+          "Integrierte Sekundarschule Wilmersdorf | Kranzer Straße 3\nInfo@sekundarschule-wilmersdorf.de | 14199",
+          "Integrierte Sekundarschule Wilmersdorf\nISS Wilmersdorf | Kranzer Str. 3 | 14199"
+        ]
+      },
+      {
+        "schulnummer": "02G02",
+        "rows": 2,
+        "variants": [
+          "Hausburg Grundschule | Hausburgstraße 20\nsek@hausburg-gs.schule-berlin-fk.de | 10249",
+          "Hausburg-Grundschule | Hausburgstr. 20 | 10249"
+        ]
+      },
+      {
+        "schulnummer": "02K08",
+        "rows": 2,
+        "variants": [
+          "Refik-Veseli-Schule | Skalitzer Str. 55 | 10997"
+        ]
+      },
+      {
+        "schulnummer": "02K04",
+        "rows": 2,
+        "variants": [
+          "Lenau-Grundschule\nBergmannkiez-Gemeinschaftsschule | Nostitzstr. 60\nErsatzbau: Gneisenaustr. 7 | 10961",
+          "Lina-Morgenstern-Schule | Gneisenaustr. 7 | 10961"
+        ]
+      },
+      {
+        "schulnummer": "/",
+        "rows": 7,
+        "variants": [
+          "Sporthalle Saefkow Platz | Anton-Saefkow-Platz 5 | 10369",
+          "Sporthalle Rudolf-Seiffert-Str. | Rudolf-Seiffert-Str. 37 | 10369",
+          "Reaktivierung ISS Paul Junius Str. 25-27 | Paul-Junius-Str. 25-27 | 10369",
+          "Sporthalle Hagenstraße | Hagenstr. 26 | 10365",
+          "Welse-Sporthalle | Welsestr. 50 | 13057",
+          "Haus des Sports\nSportstätte, keine Schule | Eisenacher Str. 121 | 12685",
+          "30. Grundschule\nexistiert online nicht | Hügelschanze | 13585"
+        ]
+      },
+      {
+        "schulnummer": "11K01",
+        "rows": 2,
+        "variants": [
+          "Alexander-Puschkin-Schule | Massower Str. 37 (?)\nFranz-Mett-Str. 18 | 10315",
+          "Sporthalle Franz-Mett-Straße\ns. Alexander-Puschkin-Schule | Franz-Mett-Str. 18 | 10319"
+        ]
+      },
+      {
+        "schulnummer": "11K10",
+        "rows": 2,
+        "variants": [
+          "Grüner Campus Malchow; Malchower Chaussee 2 | Malchower Chaussee 2 | 13051",
+          "Grüner Campus Malchow; Doberaner Str. 58 | Doberaner Str. 55 und 58 | 13051"
+        ]
+      },
+      {
+        "schulnummer": "11Kn11",
+        "rows": 2,
+        "variants": [
+          "Sporthalle Klüter Str. 36, Klüter Str. 42\nGemeinschaftsschule Klützer Straße | Klüter Str. 36 und 42 | 13057",
+          "Gemeinschaftsschule Klützer Straße | Klützer Str. 36 | 13059"
+        ]
+      },
+      {
+        "schulnummer": "11S06",
+        "rows": 2,
+        "variants": [
+          "Selma-Lagerlöf-Grundschule | Rüdigerstraße 76 | 10365",
+          "Selma-Lagerlöf-Schule / 33. Grundschule | Rüdigerstr. 76 | 10365"
+        ]
+      },
+      {
+        "schulnummer": "11Y11",
+        "rows": 2,
+        "variants": [
+          "Immanuel-Kant-Gymnasium | Lückstr. 60-63\nDolgenseestr. 42 (Sporthalle) | 10317",
+          "Immanuel-Kant-Gymnasium | Dolgenseestr. 42 | 13019"
+        ]
+      },
+      {
+        "schulnummer": "03G36",
+        "rows": 2,
+        "variants": [
+          "Reaktivierung Grundschule Buchholzer Str. 3 (früher Hans-Fallada-Schule)\nUmzug der Elisabeth-Christinen-Grundschule | Buchholzerstr. 3 | 13156",
+          "Elisabeth-Christinen-Grundschule\ns. Reaktivierung Grundschule Buchholzer Str. 3 | Lindenberger Str. 12\nUmzug nach Buchholzer Str. 3\n ecg.03g36@t-online.de | 13156"
+        ]
+      },
+      {
+        "schulnummer": "03Y17",
+        "rows": 2,
+        "variants": [
+          "Gymnasium am Europasportpark\nehem. Goubertin-Gynmasium\nUmzug und neuer Name: Inge-Deutschkron-Gymnasium | Conrad-Blenkle-Str. 34\nnach Umzug:  Kniprodestraße 29 | 10407",
+          "Inge-Deutschkron-Gymnasium | Kniprodestraße 29 | 10407"
+        ]
+      },
+      {
+        "schulnummer": "05G01",
+        "rows": 2,
+        "variants": [
+          "Ernst-Ludwig-Hem-Grundschule | Grunewaldstr. 8 | 13597",
+          "Ernst-Ludwig-Heim-Grundschule | Grunewaldstr. 8 | 13597"
+        ]
+      }
+    ]
+  },
+  "markers": {
+    "total": 2668,
+    "schoolMarkers": 575,
+    "schoolMarkersOutsideBerlin": 1,
+    "schoolMarkersZeroCoords": 0,
+    "schoolNameDuplicates": 53,
+    "schoolAddressDuplicates": 1
+  },
+  "controlQuery": {
+    "filter": "Art=unbekannt AND Gebaeudetyp=Schule",
+    "count": 232,
+    "expected": 232,
+    "matchesExpected": true,
+    "wrongAttributeRows": 0,
+    "wrongAttributeSamples": []
+  },
+  "csvToMarkerCheck": {
+    "totalCsvRows": 454,
+    "zeroMatches": 0,
+    "singleMatches": 0,
+    "multiMatches": 454,
+    "zeroMatchSamples": [],
+    "multiMatchSamples": [
+      {
+        "schulnummer": "04Y05",
+        "schule": "Herder-Gymnasium",
+        "adresse": "Westendallee 45-46",
+        "plz": "14052",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K02",
+        "schule": "Friedensburg Oberschule",
+        "adresse": "Goethestraße 8-9",
+        "plz": "10623",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G04",
+        "schule": "Joan-Miró-Grundschule",
+        "adresse": "Bleibtreustr. 43",
+        "plz": "10623",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G09",
+        "schule": "Erwin-von-Witzleben-Grundschule",
+        "adresse": "Halemweg 34",
+        "plz": "13627",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G13",
+        "schule": "Nehring-Grundschule",
+        "adresse": "Nehringstraße 9-10",
+        "plz": "14059",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y04",
+        "schule": "Gottfried-Keller-Gymnasium",
+        "adresse": "Olbersstr. 38",
+        "plz": "10589",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G08",
+        "schule": "Mierendorff-Grundschule",
+        "adresse": "Mierendorffstr. 20-24",
+        "plz": "10589",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K5",
+        "schule": "Paula-Fürst-Gemeinschaftsschule",
+        "adresse": "Sybelstr. 20-21",
+        "plz": "10629",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G06",
+        "schule": "Wald-Grundschule",
+        "adresse": "Waldschulallee 83-93",
+        "plz": "14055",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G19",
+        "schule": "Grundschule am Rüdesheimer Platz",
+        "adresse": "Rüdesheimer Straße 24-30\nSekretariat-garp@t-online.de",
+        "plz": "14197",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y09",
+        "schule": "Walther-Rathenau-Gymnasium",
+        "adresse": "Herbertstr. 2-6",
+        "plz": "14193",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K07",
+        "schule": "Integrierte Sekundarschule Wilmersdorf",
+        "adresse": "Kranzer Straße 3\nInfo@sekundarschule-wilmersdorf.de",
+        "plz": "14199",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G23",
+        "schule": "Alt-Schmargendorf-Grundschule\nCampus Schmargendorf",
+        "adresse": "Reichenhaller Str. 8",
+        "plz": "14199",
+        "matchCount": 162,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G27",
+        "schule": "Judith-Kerr-Grundschule",
+        "adresse": "Friedrichshaller Str. 13",
+        "plz": "14199",
+        "matchCount": 166,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y06",
+        "schule": "Heinz-Berggruen-Gymnasium",
+        "adresse": "Bayernallee 4",
+        "plz": "14052",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Heinz-Berggruen-Gymnasium",
+            "address": "Bayernallee 49, 14052 Berlin",
+            "lat": 52.51004,
+            "lon": 13.26732
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G05",
+        "schule": "Dietrich-Bonhoeffer-Grundschule",
+        "adresse": "Spandauer Damm 205-215",
+        "plz": "14050",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G21",
+        "schule": "Halensee-Grundschule",
+        "adresse": "Joachim-Friedrich-Straße 35-36",
+        "plz": "10711",
+        "matchCount": 162,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K07",
+        "schule": "Integrierte Sekundarschule Wilmersdorf\nISS Wilmersdorf",
+        "adresse": "Kranzer Str. 3",
+        "plz": "14199",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04S07",
+        "schule": "Comenius-Schule",
+        "adresse": "Gieselerstr. 4",
+        "plz": "10713",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G20",
+        "schule": "Katharina-Heinroth-Grundschule",
+        "adresse": "Münstersche Str. 15-17",
+        "plz": "10709",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G17",
+        "schule": "Johann-Peter-Hebel-Grundschule",
+        "adresse": "Emser Str. 50",
+        "plz": "10719",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y11",
+        "schule": "Goethe-Gymnasium",
+        "adresse": "Gasteiner Str. 23",
+        "plz": "10717",
+        "matchCount": 162,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G22",
+        "schule": "Grunewald-Grundschule",
+        "adresse": "Delbrückstr. 20",
+        "plz": "14193",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y10",
+        "schule": "Marie-Curie-Gymnasium",
+        "adresse": "Weimarische Str. 21",
+        "plz": "10715",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K03",
+        "schule": "Robert-Jungk-Schule\nOberschule, Gesamtschule",
+        "adresse": "Sächsische Str. 58",
+        "plz": "10707",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G18",
+        "schule": "Ernst-Habermann-Grundschule",
+        "adresse": "Prinzregentenstr. 33",
+        "plz": "10715",
+        "matchCount": 163,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K06",
+        "schule": "Schule am Schloss",
+        "adresse": "Schloßstr. 55A",
+        "plz": "14059",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04K09",
+        "schule": "Otto-von-Guericke-Schule",
+        "adresse": "Eisenzahnstr. 47-48",
+        "plz": "10709",
+        "matchCount": 167,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04G12",
+        "schule": "Schinkel-Grundschule",
+        "adresse": "Nithackstraße 8-12\nInfo@schinkel-grundschule.de",
+        "plz": "10585",
+        "matchCount": 160,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      },
+      {
+        "schulnummer": "04Y01",
+        "schule": "Schiller-Gymnasium",
+        "adresse": "Schillerstr. 125-127",
+        "plz": "10625",
+        "matchCount": 161,
+        "markerSamples": [
+          {
+            "name": "Christoph-Ruden-Schule",
+            "address": "",
+            "lat": 52.4208258,
+            "lon": 13.435264
+          },
+          {
+            "name": "Grundschule am Roederplatz",
+            "address": "",
+            "lat": 52.528938,
+            "lon": 13.4821061
+          },
+          {
+            "name": "",
+            "address": "",
+            "lat": 52.531897,
+            "lon": 13.4800518
+          }
+        ]
+      }
+    ]
+  },
+  "outliers": [
+    {
+      "lat": 54.5194528,
+      "lon": 13.6582867,
+      "buildingType": "schule",
+      "buildingName": "Schule am Zillepark",
+      "address": "Bergstr. 5-6, 10115 Wedding",
+      "species": [
+        "unbekannt"
+      ],
+      "statuses": [
+        "kontrolle"
+      ]
+    }
+  ],
+  "zillepark": [
+    {
+      "lat": 54.5194528,
+      "lon": 13.6582867,
+      "buildingType": "schule",
+      "buildingName": "Schule am Zillepark",
+      "address": "Bergstr. 5-6, 10115 Wedding",
+      "species": [
+        "unbekannt"
+      ],
+      "statuses": [
+        "kontrolle"
+      ]
+    }
+  ],
+  "duplicateSamples": {
+    "markerNameDuplicateSamples": [
+      {
+        "key": "schuleaufdemlichtenberg",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Schule auf dem lichten Berg",
+            "address": "Atzpodienstr. 19, Schule auf dem lichten Berg, 10365 Berlin",
+            "lat": 52.51691950000001,
+            "lon": 13.4942948
+          },
+          {
+            "name": "Schule auf dem lichten Berg",
+            "address": "Atzpodienstr. 48, 10365 Berlin",
+            "lat": 52.51254230000001,
+            "lon": 13.4924883
+          }
+        ]
+      },
+      {
+        "key": "beethovengymnasiumfilialebeethovengymnasium",
+        "count": 5,
+        "sample": [
+          {
+            "name": "Beethoven-Gymnasium / FilialeBeethoven-Gymnasium",
+            "address": "Barbarastr. 14, 12249 Berlin",
+            "lat": 52.4331464,
+            "lon": 13.3416744
+          },
+          {
+            "name": "Beethoven-Gymnasium / FilialeBeethoven-Gymnasium",
+            "address": "Barbarastr. 18, 12249 Berlin",
+            "lat": 52.4329489,
+            "lon": 13.3413163
+          },
+          {
+            "name": "Beethoven-Gymnasium / FilialeBeethoven-Gymnasium",
+            "address": "Barbarastr. 2, 12249 Berlin",
+            "lat": 52.43378999999999,
+            "lon": 13.3428
+          },
+          {
+            "name": "Beethoven-Gymnasium / FilialeBeethoven-Gymnasium",
+            "address": "Barbarastr. 26, 12249 Berlin",
+            "lat": 52.4325444,
+            "lon": 13.3413142
+          },
+          {
+            "name": "Beethoven-Gymnasium / FilialeBeethoven-Gymnasium",
+            "address": "Barbarastr. 9, 12249 Berlin",
+            "lat": 52.43293,
+            "lon": 13.3428299
+          }
+        ]
+      },
+      {
+        "key": "gustavlangenscheidtschule",
+        "count": 6,
+        "sample": [
+          {
+            "name": "Gustav-Langenscheidt-Schule",
+            "address": "Belziger Str. 13, 10823 Berlin",
+            "lat": 52.4876198,
+            "lon": 13.3555319
+          },
+          {
+            "name": "Gustav-Langenscheidt-Schule",
+            "address": "Belziger Str. 30, 10823 Berlin",
+            "lat": 52.4870853,
+            "lon": 13.3528571
+          },
+          {
+            "name": "Gustav-Langenscheidt-Schule",
+            "address": "Belziger Str. 37, 10823 Berlin",
+            "lat": 52.48637,
+            "lon": 13.3521299
+          },
+          {
+            "name": "Gustav-Langenscheidt-Schule",
+            "address": "Belziger Str. 52, 10823 Berlin",
+            "lat": 52.48582,
+            "lon": 13.34886
+          },
+          {
+            "name": "Gustav-Langenscheidt-Schule",
+            "address": "Belziger Str. 7, 10823 Berlin",
+            "lat": 52.4881448,
+            "lon": 13.3567701
+          }
+        ]
+      },
+      {
+        "key": "friedrichebertgymnasium",
+        "count": 7,
+        "sample": [
+          {
+            "name": "Friedrich-Ebert-Gymnasium",
+            "address": "Blissestr. 14, 10713 Berlin",
+            "lat": 52.4849919,
+            "lon": 13.3200416
+          },
+          {
+            "name": "Friedrich-Ebert-Gymnasium",
+            "address": "Blissestr. 18, 10713 Berlin",
+            "lat": 52.4847379,
+            "lon": 13.3198134
+          },
+          {
+            "name": "Friedrich-Ebert-Gymnasium",
+            "address": "Blissestr. 30, 10713 Berlin",
+            "lat": 52.4825232,
+            "lon": 13.3200851
+          },
+          {
+            "name": "Friedrich-Ebert-Gymnasium",
+            "address": "Blissestr. 31, 10713 Berlin",
+            "lat": 52.4822674,
+            "lon": 13.3206534
+          },
+          {
+            "name": "Friedrich-Ebert-Gymnasium",
+            "address": "Blissestr. 43, 10713 Berlin",
+            "lat": 52.4811712,
+            "lon": 13.3205987
+          }
+        ]
+      },
+      {
+        "key": "carlvonossietzkyschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Carl-von-Ossietzky-Schule",
+            "address": "",
+            "lat": 52.4941938,
+            "lon": 13.3987461
+          },
+          {
+            "name": "Carl-von-Ossietzky-Schule",
+            "address": "",
+            "lat": 52.4959395,
+            "lon": 13.3968688
+          }
+        ]
+      },
+      {
+        "key": "athenegrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Athene-Grundschule",
+            "address": "Curtiusstr. 37, 12205 Berlin",
+            "lat": 52.4404192,
+            "lon": 13.2903455
+          },
+          {
+            "name": "Athene-Grundschule",
+            "address": "Curtiusstr. 13, 12205 Berlin",
+            "lat": 52.4418969,
+            "lon": 13.2943035
+          }
+        ]
+      },
+      {
+        "key": "friedrichdrakegrundschule",
+        "count": 6,
+        "sample": [
+          {
+            "name": "Friedrich-Drake-Grundschule",
+            "address": "Drakestr. 79, 12205 Berlin",
+            "lat": 52.4329046,
+            "lon": 13.3073542
+          },
+          {
+            "name": "Friedrich-Drake-Grundschule",
+            "address": "Drakestr. 8, 12205 Berlin",
+            "lat": 52.43451,
+            "lon": 13.30651
+          },
+          {
+            "name": "Friedrich-Drake-Grundschule",
+            "address": "Drakestr. 80, 12205 Berlin",
+            "lat": 52.4323682,
+            "lon": 13.3077842
+          },
+          {
+            "name": "Friedrich-Drake-Grundschule",
+            "address": "Drakestr. 64, 12205 Berlin",
+            "lat": 52.4373653,
+            "lon": 13.3024312
+          },
+          {
+            "name": "Friedrich-Drake-Grundschule",
+            "address": "Drakestr. 25, 12205 Berlin",
+            "lat": 52.440211,
+            "lon": 13.3001403
+          }
+        ]
+      },
+      {
+        "key": "maxvonlaueschule",
+        "count": 7,
+        "sample": [
+          {
+            "name": "Max-von-Laue-Schule",
+            "address": "",
+            "lat": 52.4416015,
+            "lon": 13.3150453
+          },
+          {
+            "name": "Max-von-Laue-Schule",
+            "address": "",
+            "lat": 52.43945069999999,
+            "lon": 13.310137
+          },
+          {
+            "name": "Max-von-Laue-Schule",
+            "address": "",
+            "lat": 52.4405742,
+            "lon": 13.3126241
+          },
+          {
+            "name": "Max-von-Laue-Schule",
+            "address": "",
+            "lat": 52.4404589,
+            "lon": 13.3124376
+          },
+          {
+            "name": "Max-von-Laue-Schule",
+            "address": "",
+            "lat": 52.4369421,
+            "lon": 13.3039103
+          }
+        ]
+      },
+      {
+        "key": "ottovonguerickeschule",
+        "count": 7,
+        "sample": [
+          {
+            "name": "Otto-von-Guericke-Schule",
+            "address": "Eisenzahnstr. 13, 10709 Berlin",
+            "lat": 52.4953592,
+            "lon": 13.3046681
+          },
+          {
+            "name": "Otto-von-Guericke-Schule",
+            "address": "Eisenzahnstr. 3, 10709 Berlin",
+            "lat": 52.4985456,
+            "lon": 13.3051124
+          },
+          {
+            "name": "Otto-von-Guericke-Schule",
+            "address": "Eisenzahnstr. 57, 10709 Berlin",
+            "lat": 52.4960691,
+            "lon": 13.3052873
+          },
+          {
+            "name": "Otto-von-Guericke-Schule",
+            "address": "Eisenzahnstr. 60, 10709 Berlin",
+            "lat": 52.49702199999999,
+            "lon": 13.3055192
+          },
+          {
+            "name": "Otto-von-Guericke-Schule",
+            "address": "Eisenzahnstr. 63, 10709 Berlin",
+            "lat": 52.4983371,
+            "lon": 13.3056358
+          }
+        ]
+      },
+      {
+        "key": "hermannehlersgymnasium",
+        "count": 3,
+        "sample": [
+          {
+            "name": "Hermann-Ehlers-Gymnasium",
+            "address": "Elisenstr. 3-4, Hermann-Ehlers-Gymnasium, 12169 Berlin",
+            "lat": 52.453105,
+            "lon": 13.3346948
+          },
+          {
+            "name": "Hermann-Ehlers-Gymnasium",
+            "address": "Elisenstr. 6, 12169 Berlin",
+            "lat": 52.45385,
+            "lon": 13.33439
+          },
+          {
+            "name": "Hermann-Ehlers-Gymnasium",
+            "address": "Elisenstr. 24, 12169 Berlin",
+            "lat": 52.4530287,
+            "lon": 13.3333247
+          }
+        ]
+      },
+      {
+        "key": "sophieschollschule",
+        "count": 4,
+        "sample": [
+          {
+            "name": "Sophie-Scholl-Schule",
+            "address": "",
+            "lat": 52.4925,
+            "lon": 13.35585
+          },
+          {
+            "name": "Sophie-Scholl-Schule",
+            "address": "",
+            "lat": 52.4917634,
+            "lon": 13.3562086
+          },
+          {
+            "name": "Sophie-Scholl-Schule",
+            "address": "",
+            "lat": 52.49159880000001,
+            "lon": 13.3567266
+          },
+          {
+            "name": "Sophie-Scholl-Schule",
+            "address": "",
+            "lat": 52.4928075,
+            "lon": 13.3565827
+          }
+        ]
+      },
+      {
+        "key": "teltowgrundschule",
+        "count": 5,
+        "sample": [
+          {
+            "name": "Teltow-Grundschule",
+            "address": "Feurigstr. 39, 10827 Berlin",
+            "lat": 52.4815079,
+            "lon": 13.3499389
+          },
+          {
+            "name": "Teltow-Grundschule",
+            "address": "Feurigstr. 4, 10827 Berlin",
+            "lat": 52.4860641,
+            "lon": 13.3593269
+          },
+          {
+            "name": "Teltow-Grundschule",
+            "address": "Feurigstr. 63, 10827 Berlin",
+            "lat": 52.485353,
+            "lon": 13.3581322
+          },
+          {
+            "name": "Teltow-Grundschule",
+            "address": "Feurigstr. 66, 10827 Berlin",
+            "lat": 52.4855795,
+            "lon": 13.3592998
+          },
+          {
+            "name": "Teltow-Grundschule",
+            "address": "Feurigstr. 22, 10827 Berlin",
+            "lat": 52.4839156,
+            "lon": 13.3546112
+          }
+        ]
+      },
+      {
+        "key": "johanngottfriedherdergymnasiumjohanngottfriedherderschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Johann-Gottfried-Herder-Gymnasium / Johann-Gottfried-Herder-Schule",
+            "address": "Franz-Jacob-Str. 14, 10369 Berlin",
+            "lat": 52.52892,
+            "lon": 13.46817
+          },
+          {
+            "name": "Johann-Gottfried-Herder-Gymnasium / Johann-Gottfried-Herder-Schule",
+            "address": "Franz-Jacob-Str. 8, 10369 Berlin",
+            "lat": 52.5267104,
+            "lon": 13.4672447
+          }
+        ]
+      },
+      {
+        "key": "judithkerrgrundschule",
+        "count": 6,
+        "sample": [
+          {
+            "name": "Judith-Kerr-Grundschule",
+            "address": "Friedrichshaller Str. 13, 14199 Berlin",
+            "lat": 52.475327,
+            "lon": 13.2950561
+          },
+          {
+            "name": "Judith-Kerr-Grundschule",
+            "address": "Friedrichshaller Str. 20, 14199 Berlin",
+            "lat": 52.4760199,
+            "lon": 13.2907862
+          },
+          {
+            "name": "Judith-Kerr-Grundschule",
+            "address": "Friedrichshaller Str. 43, 14199 Berlin",
+            "lat": 52.47423999999999,
+            "lon": 13.29905
+          },
+          {
+            "name": "Judith-Kerr-Grundschule",
+            "address": "Friedrichshaller Str. 6, 14199 Berlin",
+            "lat": 52.47629999999999,
+            "lon": 13.2964
+          },
+          {
+            "name": "Judith-Kerr-Grundschule",
+            "address": "Friedrichshaller Str. 7, 14199 Berlin",
+            "lat": 52.4757,
+            "lon": 13.29645
+          }
+        ]
+      },
+      {
+        "key": "galileigrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Galilei-Grundschule",
+            "address": "Friedrichstr. 207, 10969 Berlin",
+            "lat": 52.50732379999999,
+            "lon": 13.3901385
+          },
+          {
+            "name": "Galilei-Grundschule",
+            "address": "Friedrichstr. 13, 10969 Berlin",
+            "lat": 52.501744,
+            "lon": 13.3917152
+          }
+        ]
+      },
+      {
+        "key": "goethegymnasium",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Goethe-Gymnasium",
+            "address": "Gasteiner Str. 11, 10717 Berlin",
+            "lat": 52.48782689999999,
+            "lon": 13.3215387
+          },
+          {
+            "name": "Goethe-Gymnasium",
+            "address": "Gasteiner Str. 19, 10717 Berlin",
+            "lat": 52.48741649999999,
+            "lon": 13.3206721
+          }
+        ]
+      },
+      {
+        "key": "sporthallegensingerstradamriesgrundschule",
+        "count": 4,
+        "sample": [
+          {
+            "name": "Sporthalle Gensinger Str. / Adam-Ries-Grundschule",
+            "address": "Gensinger Str. 56, 10315 Berlin",
+            "lat": 52.51232539999999,
+            "lon": 13.5258101
+          },
+          {
+            "name": "Sporthalle Gensinger Str. / Adam-Ries-Grundschule",
+            "address": "Alt-Friedrichsfelde 107, 10315 Berlin",
+            "lat": 52.5108733,
+            "lon": 13.5127295
+          },
+          {
+            "name": "Sporthalle Gensinger Str. / Adam-Ries-Grundschule",
+            "address": "Alt-Friedrichsfelde 87, 10315 Berlin",
+            "lat": 52.51018209999999,
+            "lon": 13.517966
+          },
+          {
+            "name": "Sporthalle Gensinger Str. / Adam-Ries-Grundschule",
+            "address": "Alt-Friedrichsfelde 88, 10315 Berlin",
+            "lat": 52.5101921,
+            "lon": 13.5176859
+          }
+        ]
+      },
+      {
+        "key": "paulnatorpgymnasium",
+        "count": 3,
+        "sample": [
+          {
+            "name": "Paul-Natorp-Gymnasium",
+            "address": "",
+            "lat": 52.4692817,
+            "lon": 13.3250601
+          },
+          {
+            "name": "Paul-Natorp-Gymnasium",
+            "address": "",
+            "lat": 52.47006709999999,
+            "lon": 13.3264934
+          },
+          {
+            "name": "Paul-Natorp-Gymnasium",
+            "address": "",
+            "lat": 52.47043,
+            "lon": 13.32698
+          }
+        ]
+      },
+      {
+        "key": "wilhelmhauffgrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Wilhelm-Hauff-Grundschule",
+            "address": "Gotenburger Str. 7, 13359 Berlin",
+            "lat": 52.5573263,
+            "lon": 13.3836454
+          },
+          {
+            "name": "Wilhelm-Hauff-Grundschule",
+            "address": "Gotenburger Str. 8, Wilhelm-Hauff-Grundschule, 13359 Berlin",
+            "lat": 52.5577854,
+            "lon": 13.3843568
+          }
+        ]
+      },
+      {
+        "key": "paulsengymnasium",
+        "count": 7,
+        "sample": [
+          {
+            "name": "Paulsen-Gymnasium",
+            "address": "Gritznerstr. 19, 12163 Berlin",
+            "lat": 52.46485999999999,
+            "lon": 13.31818
+          },
+          {
+            "name": "Paulsen-Gymnasium",
+            "address": "Gritznerstr. 31, 12163 Berlin",
+            "lat": 52.46372,
+            "lon": 13.31636
+          },
+          {
+            "name": "Paulsen-Gymnasium",
+            "address": "Gritznerstr. 32, 12163 Berlin",
+            "lat": 52.464015,
+            "lon": 13.3159089
+          },
+          {
+            "name": "Paulsen-Gymnasium",
+            "address": "Gritznerstr. 37, 12163 Berlin",
+            "lat": 52.4631202,
+            "lon": 13.3155248
+          },
+          {
+            "name": "Paulsen-Gymnasium",
+            "address": "Gritznerstr. 38, 12163 Berlin",
+            "lat": 52.46344999999999,
+            "lon": 13.3151099
+          }
+        ]
+      },
+      {
+        "key": "annalindhgrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Anna-Lindh-Grundschule",
+            "address": "Guineastr. 26, 13351 Berlin",
+            "lat": 52.5497337,
+            "lon": 13.3420701
+          },
+          {
+            "name": "Anna-Lindh-Grundschule",
+            "address": "Guineastr. 17, Anna-Lindh-Grundschule, 13351 Berlin",
+            "lat": 52.5506949,
+            "lon": 13.3417994
+          }
+        ]
+      },
+      {
+        "key": "ludwigbechsteingrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Ludwig-Bechstein-Grundschule",
+            "address": "Halbauer Weg 22, 12249 Berlin",
+            "lat": 52.434,
+            "lon": 13.36188
+          },
+          {
+            "name": "Ludwig-Bechstein-Grundschule",
+            "address": "Halbauer Weg 25, 12249 Berlin",
+            "lat": 52.43255,
+            "lon": 13.36236
+          }
+        ]
+      },
+      {
+        "key": "claragrunwaldgrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Clara-Grunwald-Grundschule",
+            "address": "Hallesche Str. 1, 10963 Berlin",
+            "lat": 52.5011903,
+            "lon": 13.3854877
+          },
+          {
+            "name": "Clara-Grunwald-Grundschule",
+            "address": "Hallesche Str. 24, 10963 Berlin",
+            "lat": 52.500939,
+            "lon": 13.3848935
+          }
+        ]
+      },
+      {
+        "key": "hansfalladaschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Hans-Fallada-Schule",
+            "address": "Harzer Str. 39, 12059 Berlin",
+            "lat": 52.4844921,
+            "lon": 13.4496617
+          },
+          {
+            "name": "Hans-Fallada-Schule",
+            "address": "Harzer Str. 73, 12059 Berlin",
+            "lat": 52.48398,
+            "lon": 13.45191
+          }
+        ]
+      },
+      {
+        "key": "quentinblakegrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Quentin-Blake-Grundschule",
+            "address": "",
+            "lat": 52.4547258,
+            "lon": 13.2700681
+          },
+          {
+            "name": "Quentin-Blake-Grundschule",
+            "address": "",
+            "lat": 52.4547258,
+            "lon": 13.2700681
+          }
+        ]
+      },
+      {
+        "key": "halenseegrundschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Halensee-Grundschule",
+            "address": "Joachim-Friedrich-Str. 46, 10711 Berlin",
+            "lat": 52.4971442,
+            "lon": 13.2958481
+          },
+          {
+            "name": "Halensee-Grundschule",
+            "address": "Joachim-Friedrich-Str. 31, 10711 Berlin",
+            "lat": 52.5010553,
+            "lon": 13.2961131
+          }
+        ]
+      },
+      {
+        "key": "grundschuleamstadparksteglitz34grundschule",
+        "count": 5,
+        "sample": [
+          {
+            "name": "Grundschule am Stadpark Steglitz / 34. Grundschule",
+            "address": "Karl-Stieler-Str. 10, 12167 Berlin",
+            "lat": 52.4493199,
+            "lon": 13.3429879
+          },
+          {
+            "name": "Grundschule am Stadpark Steglitz / 34. Grundschule",
+            "address": "Karl-Stieler-Str. 3a, 12167 Berlin",
+            "lat": 52.44998,
+            "lon": 13.3392
+          },
+          {
+            "name": "Grundschule am Stadpark Steglitz / 34. Grundschule",
+            "address": "Karl-Stieler-Str. 8a, 12167 Berlin",
+            "lat": 52.4492743,
+            "lon": 13.3414957
+          },
+          {
+            "name": "Grundschule am Stadpark Steglitz / 34. Grundschule",
+            "address": "Karl-Stieler-Str. 9, 12167 Berlin",
+            "lat": 52.44915830000001,
+            "lon": 13.3432474
+          },
+          {
+            "name": "Grundschule am Stadpark Steglitz / 34. Grundschule",
+            "address": "Karl-Stieler-Str. 12, 12167 Berlin",
+            "lat": 52.4496663,
+            "lon": 13.3422562
+          }
+        ]
+      },
+      {
+        "key": "helenelangeschule",
+        "count": 7,
+        "sample": [
+          {
+            "name": "Helene-Lange-Schule",
+            "address": "Lauenburger Str. 34, 12169 Berlin",
+            "lat": 52.4600624,
+            "lon": 13.3374262
+          },
+          {
+            "name": "Helene-Lange-Schule",
+            "address": "Lauenburger Str. 114, 12169 Berlin",
+            "lat": 52.4522323,
+            "lon": 13.3356021
+          },
+          {
+            "name": "Helene-Lange-Schule",
+            "address": "Lauenburger Str. 42, 12169 Berlin",
+            "lat": 52.45912999999999,
+            "lon": 13.33732
+          },
+          {
+            "name": "Helene-Lange-Schule",
+            "address": "Lauenburger Str. 55, 12169 Berlin",
+            "lat": 52.45793,
+            "lon": 13.33816
+          },
+          {
+            "name": "Helene-Lange-Schule",
+            "address": "Lauenburger Str. 57, 12169 Berlin",
+            "lat": 52.45769310000001,
+            "lon": 13.3382702
+          }
+        ]
+      },
+      {
+        "key": "friedrichbergiusschule",
+        "count": 2,
+        "sample": [
+          {
+            "name": "Friedrich-Bergius-Schule",
+            "address": "Lauterstr. 1, 12159 Berlin",
+            "lat": 52.4753,
+            "lon": 13.33497
+          },
+          {
+            "name": "Friedrich-Bergius-Schule",
+            "address": "Perelsplatz 6, 12159 Berlin",
+            "lat": 52.47618,
+            "lon": 13.33314
+          }
+        ]
+      },
+      {
+        "key": "kopernikusschule",
+        "count": 3,
+        "sample": [
+          {
+            "name": "Kopernikus-Schule",
+            "address": "Lepsiusstr. 15, 12163 Berlin",
+            "lat": 52.46473,
+            "lon": 13.32179
+          },
+          {
+            "name": "Kopernikus-Schule",
+            "address": "Lepsiusstr. 73, 12163 Berlin",
+            "lat": 52.4597912,
+            "lon": 13.3167946
+          },
+          {
+            "name": "Kopernikus-Schule",
+            "address": "",
+            "lat": 52.4590203,
+            "lon": 13.3161134
+          }
+        ]
+      }
+    ],
+    "markerAddressDuplicateSamples": [
+      {
+        "key": "haydnstr912203berlin",
+        "count": 2,
+        "sample": [
+          {
+            "name": "",
+            "address": "Haydnstr. 9, 12203 Berlin",
+            "lat": 52.4476525,
+            "lon": 13.3173464
+          },
+          {
+            "name": "",
+            "address": "Haydnstr. 9, 12203 Berlin",
+            "lat": 52.4476525,
+            "lon": 13.3173464
+          }
+        ]
+      }
+    ]
+  },
+  "schulnummerParityCheck": {
+    "possible": false,
+    "reason": "Schulnummer ist in Markerdaten nicht enthalten.",
+    "heuristicMatchedUniqueSchulnummer": 436,
+    "csvUniqueSchulnummer": 436
+  }
+}
