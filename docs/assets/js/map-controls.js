@@ -1,9 +1,11 @@
 (function(){
       try { window.__MS_CONTROLS_READY = true; } catch(e) {}
-      var SPECIES_COLORS_JS = {"Mauersegler": "#1f78b4", "Sperling": "#33a02c", "Schwalbe": "#6a3d9a", "Fledermaus": "#000000", "Star": "#b15928", "Andere": "#ff7f00"};
+      var SPECIES_COLORS_JS = {"Mauersegler": "#1f78b4", "Sperling": "#33a02c", "Schwalbe": "#6a3d9a", "Fledermaus": "#000000", "Star": "#b15928", "Andere": "#ff7f00", "unbekannt": "#7a7a7a"};
       var STATUS_INFO_JS = {"verloren": {"label": "verlorene Niststätte", "color": "#616161", "short": "×"}, "sanierung": {"label": "Sanierung", "color": "#e31a1c", "short": "S"}, "ersatz": {"label": "Ersatzmaßn.", "color": "#00897b", "short": "E"}, "kontrolle": {"label": "Kontrolle", "color": "#1976d2", "short": "K"}, "none": {"label": "Ohne Status", "color": "#9e9e9e", "short": "—"}};
+      var BUILDING_TYPE_INFO_JS = {"schule": {"label": "Schule"}};
       var ALL_SPECIES = Object.keys(SPECIES_COLORS_JS);
       var ALL_STATUS = Object.keys(STATUS_INFO_JS);
+      var ALL_BUILDING_TYPES = Object.keys(BUILDING_TYPE_INFO_JS);
       var MOBILE_MAX_WIDTH = 768;
       var FEEDBACK_MAILTO = 'mailto:detlefdev@gmail.com?subject=Feedback%20zur%20Karte';
       var ABOUT_APP_TEXT = 'Die NABU Gebäudebrüter Berlin – KartenApp (v.2.0) zeigt Nist‑ und Brutstandorte aus der Online‑Datenbank der NABU-Bezirksgruppe Steglitz-Zehlendorf und macht Gebäudebrüter in ganz Berlin sichtbar.\nEntwickelt wurde die App von Andreas Richter für die NABU‑Bezirksgruppe Steglitz‑Zehlendorf, mit Dank an die engagierten Team‑Mitglieder des Projekts Artenschutz am Gebäude.';
@@ -1034,13 +1036,14 @@
       function parseMetaFromIconHtml(html){
         var temp = document.createElement('div'); temp.innerHTML = (html||'').trim();
         var el = temp.querySelector('.ms-marker');
-        var species = []; var statuses = []; var statusColor = '#9e9e9e';
+        var species = []; var statuses = []; var statusColor = '#9e9e9e'; var buildingType = '';
         if(el){
           try{ species = JSON.parse(el.getAttribute('data-species')||'[]'); }catch(e){}
           try{ statuses = JSON.parse(el.getAttribute('data-statuses')||'[]'); }catch(e){}
           statusColor = el.getAttribute('data-statuscolor') || '#9e9e9e';
+          buildingType = (el.getAttribute('data-building-type') || '').trim().toLowerCase();
         }
-        return { species: species, statuses: statuses, statusColor: statusColor };
+        return { species: species, statuses: statuses, statusColor: statusColor, buildingType: buildingType };
       }
       function initMarkers(){
         MS.markers = MS.cluster.getLayers();
@@ -1800,8 +1803,12 @@
         target.classList.add('ms-width-match');
         return true;
       }
+      function isUnknownOnly(species){
+        return !!(species && species.length === 1 && species[0] === 'unbekannt');
+      }
       function computeGradient(species){
         if(!species || !species.length){ return '#cccccc'; }
+        if(isUnknownOnly(species)){ return 'transparent'; }
         var n = Math.min(species.length, 4);
         var seg = 360 / n;
         var stops = [];
@@ -1825,6 +1832,7 @@
           var hasNoStatus = !st || st.length === 0;
           var wantsNoStatus = selectedStatus.indexOf('none') !== -1;
           var stSel = statusAll ? st : (selectedStatus.length ? intersection(st, selectedStatus) : []);
+          var unknownOnly = isUnknownOnly(spSel);
           var color = 'transparent';
           if(statusAll){
             color = m._ms.statusColor || '#9e9e9e';
@@ -1834,20 +1842,23 @@
           } else if(wantsNoStatus && hasNoStatus){
             color = (STATUS_INFO_JS['none'] && STATUS_INFO_JS['none'].color) || (m._ms.statusColor || '#9e9e9e');
           }
+          if(unknownOnly){ color = '#9e9e9e'; }
           inner.style.outline = '2px solid ' + color;
           var badge = inner.querySelector('.ms-badge'); if(badge){ badge.classList.toggle('ms-badge-visible', !!stSel.length); badge.style.background = color; }
         }
       }
-      function rebuildCluster(selectedSpecies, selectedStatus){
+      function rebuildCluster(selectedSpecies, selectedStatus, selectedBuildingTypes){
         if(!MS.ready){ return; }
         MS.cluster.clearLayers();
         var speciesAll = selectedSpecies.length === ALL_SPECIES.length;
         var statusAll = selectedStatus.length === ALL_STATUS.length;
+        var buildingAll = !ALL_BUILDING_TYPES.length || selectedBuildingTypes.length === ALL_BUILDING_TYPES.length;
         var toAdd = [];
         for(var i=0;i<MS.markers.length;i++){
           var m = MS.markers[i];
           var sp = m._ms.species || [];
           var st = m._ms.statuses || [];
+          var bt = (m._ms.buildingType || '').toLowerCase();
           // Group semantics:
           // - none selected => show nothing
           // - all selected => do not restrict (also includes markers with empty st/sp)
@@ -1860,7 +1871,8 @@
               (wantsNoStatus && hasNoStatus) || intersection(st, selectedStatus).length > 0
             ) : false
           );
-          var visible = speciesAllows && statusAllows;
+          var buildingAllows = buildingAll ? true : (selectedBuildingTypes.length ? selectedBuildingTypes.indexOf(bt) !== -1 : false);
+          var visible = speciesAllows && statusAllows && buildingAllows;
           if(visible){ toAdd.push(m); }
         }
         toAdd.forEach(function(m){ MS.cluster.addLayer(m); });
@@ -1918,9 +1930,13 @@
         var sAccordion = document.getElementById('ms-species-accordion-content');
         var stRow = document.getElementById('ms-status-row');
         var stAccordion = document.getElementById('ms-status-accordion-content');
+        var bRow = document.getElementById('ms-building-row');
+        var bAccordion = document.getElementById('ms-building-accordion-content');
         if(!sRow || !sAccordion || !stRow || !stAccordion) return;
         sRow.innerHTML = ''; sAccordion.innerHTML = '';
         stRow.innerHTML = ''; stAccordion.innerHTML = '';
+        if(bRow){ bRow.innerHTML = ''; }
+        if(bAccordion){ bAccordion.innerHTML = ''; }
         // 'Alle' for species
         function makeAllCheckbox(id){
           var wrap = document.createElement('label');
@@ -1981,12 +1997,35 @@
           stRow.appendChild(makeEntry('ms-st'));
           stAccordion.appendChild(makeEntry('ms-st-sheet'));
         });
+
+        if(bRow && bAccordion && ALL_BUILDING_TYPES.length){
+          var bAllDesktop = makeAllCheckbox('ms-building-all'); bRow.appendChild(bAllDesktop.wrap);
+          var bAllSheet = makeAllCheckbox('ms-building-all-sheet'); bAccordion.appendChild(bAllSheet.wrap);
+          ALL_BUILDING_TYPES.forEach(function(key){
+            var info = BUILDING_TYPE_INFO_JS[key] || { label: key };
+            function makeEntry(prefix){
+              var id = prefix + '-' + key;
+              var wrap = document.createElement('label'); wrap.className = 'ms-filter-option';
+              var cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = key; cb.id = id; cb.className = 'ms-filter-building'; cb.checked = true;
+              var swatch = document.createElement('span'); swatch.className = 'ms-filter-swatch ms-filter-swatch-building';
+              swatch.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zm0 13L5 12.18V16c0 2.76 3.13 5 7 5s7-2.24 7-5v-3.82L12 16z"/></svg>';
+              wrap.appendChild(cb);
+              var value = document.createElement('span'); value.className = 'ms-value'; value.textContent = info.label;
+              wrap.appendChild(value);
+              wrap.appendChild(swatch);
+              return wrap;
+            }
+            bRow.appendChild(makeEntry('ms-bt'));
+            bAccordion.appendChild(makeEntry('ms-bt-sheet'));
+          });
+        }
       }
       function applyFilters(){
         var selectedSpecies = Array.from(document.querySelectorAll('.ms-filter-species:checked')).map(function(el){ return el.value; });
         var selectedStatus = Array.from(document.querySelectorAll('.ms-filter-status:checked')).map(function(el){ return el.value; });
-        if(!MS.ready){ setTimeout(function(){ rebuildCluster(selectedSpecies, selectedStatus); }, 150); }
-        else { rebuildCluster(selectedSpecies, selectedStatus); }
+        var selectedBuildingTypes = Array.from(document.querySelectorAll('.ms-filter-building:checked')).map(function(el){ return el.value; });
+        if(!MS.ready){ setTimeout(function(){ rebuildCluster(selectedSpecies, selectedStatus, selectedBuildingTypes); }, 150); }
+        else { rebuildCluster(selectedSpecies, selectedStatus, selectedBuildingTypes); }
         updateFilterFabIndicator();
       }
       function updateFilterFabIndicator(){
@@ -1994,6 +2033,7 @@
         var layerFab = document.getElementById('fab-layer');
         var speciesBoxes = document.querySelectorAll('.ms-filter-species');
         var statusBoxes = document.querySelectorAll('.ms-filter-status');
+        var buildingBoxes = document.querySelectorAll('.ms-filter-building');
 
         if(layerFab){
           var legacyLayerBadge = layerFab.querySelector('.ms-fab-badge');
@@ -2017,7 +2057,9 @@
         }
         var speciesChecked = Array.prototype.filter.call(speciesBoxes, function(el){ return el.checked; }).length;
         var statusChecked = Array.prototype.filter.call(statusBoxes, function(el){ return el.checked; }).length;
-        var allSelected = (speciesChecked === speciesBoxes.length) && (statusChecked === statusBoxes.length);
+        var buildingChecked = buildingBoxes.length ? Array.prototype.filter.call(buildingBoxes, function(el){ return el.checked; }).length : 0;
+        var buildingAllSelected = buildingBoxes.length ? (buildingChecked === buildingBoxes.length) : true;
+        var allSelected = (speciesChecked === speciesBoxes.length) && (statusChecked === statusBoxes.length) && buildingAllSelected;
         funnelFab.classList.toggle('is-active', !allSelected);
       }
       function wireFilters(){
@@ -2027,7 +2069,7 @@
         }
         function syncByValue(source){
           if(!source){ return; }
-          var selector = source.classList.contains('ms-filter-species') ? '.ms-filter-species' : '.ms-filter-status';
+          var selector = source.classList.contains('ms-filter-species') ? '.ms-filter-species' : (source.classList.contains('ms-filter-status') ? '.ms-filter-status' : '.ms-filter-building');
           document.querySelectorAll(selector).forEach(function(cb){
             if(cb !== source && cb.value === source.value){ cb.checked = source.checked; }
           });
@@ -2035,17 +2077,21 @@
         function setGroupChecked(group, checked, source){
           document.querySelectorAll(group).forEach(function(cb){ if(cb !== source){ cb.checked = checked; } });
         }
-        document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(input){
+        document.querySelectorAll('.ms-filter-species, .ms-filter-status, .ms-filter-building').forEach(function(input){
           bindChange(input, function(ev){ syncByValue(ev.target); updateFilterFabIndicator(); });
         });
         var speciesAllDesktop = document.getElementById('ms-species-all');
         var speciesAllSheet = document.getElementById('ms-species-all-sheet');
         var statusAllDesktop = document.getElementById('ms-status-all');
         var statusAllSheet = document.getElementById('ms-status-all-sheet');
+        var buildingAllDesktop = document.getElementById('ms-building-all');
+        var buildingAllSheet = document.getElementById('ms-building-all-sheet');
         bindChange(speciesAllDesktop, function(ev){ setGroupChecked('#ms-species-row input[type=checkbox], #ms-species-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
         bindChange(speciesAllSheet, function(ev){ setGroupChecked('#ms-species-row input[type=checkbox], #ms-species-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
         bindChange(statusAllDesktop, function(ev){ setGroupChecked('#ms-status-row input[type=checkbox], #ms-status-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
         bindChange(statusAllSheet, function(ev){ setGroupChecked('#ms-status-row input[type=checkbox], #ms-status-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+        bindChange(buildingAllDesktop, function(ev){ setGroupChecked('#ms-building-row input[type=checkbox], #ms-building-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
+        bindChange(buildingAllSheet, function(ev){ setGroupChecked('#ms-building-row input[type=checkbox], #ms-building-accordion-content input[type=checkbox]', ev.target.checked, ev.target); updateFilterFabIndicator(); });
 
         var openBtn = document.getElementById('ms-open-sheet');
         var sheet = document.getElementById('ms-bottom-sheet');
@@ -2129,9 +2175,9 @@
         var resetSheetBtn = document.getElementById('ms-reset-sheet');
         function resetFiltersToAll(){
           // Keep existing filter reset logic unchanged.
-          document.querySelectorAll('.ms-filter-species, .ms-filter-status').forEach(function(el){ el.checked = true; });
-          document.querySelectorAll('#ms-species-all, #ms-species-all-sheet, #ms-status-all, #ms-status-all-sheet').forEach(function(el){ el.checked = true; });
-          rebuildCluster(Object.keys(SPECIES_COLORS_JS), Object.keys(STATUS_INFO_JS));
+          document.querySelectorAll('.ms-filter-species, .ms-filter-status, .ms-filter-building').forEach(function(el){ el.checked = true; });
+          document.querySelectorAll('#ms-species-all, #ms-species-all-sheet, #ms-status-all, #ms-status-all-sheet, #ms-building-all, #ms-building-all-sheet').forEach(function(el){ el.checked = true; });
+          rebuildCluster(Object.keys(SPECIES_COLORS_JS), Object.keys(STATUS_INFO_JS), Object.keys(BUILDING_TYPE_INFO_JS));
           updateFilterFabIndicator();
           // Mobile parity: reset closes sheet just like apply.
           if(sheet && sheet.classList.contains('open')){
@@ -3178,5 +3224,5 @@
       });
       buildFilters();
       wireFilters();
-      setTimeout(function(){ var selectedSpecies = Object.keys(SPECIES_COLORS_JS); var selectedStatus = Object.keys(STATUS_INFO_JS); rebuildCluster(selectedSpecies, selectedStatus); }, 250);
+      setTimeout(function(){ var selectedSpecies = Object.keys(SPECIES_COLORS_JS); var selectedStatus = Object.keys(STATUS_INFO_JS); var selectedBuildingTypes = Object.keys(BUILDING_TYPE_INFO_JS); rebuildCluster(selectedSpecies, selectedStatus, selectedBuildingTypes); }, 250);
     })();
